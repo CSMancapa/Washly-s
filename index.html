@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Washly's · Mobile car wash, Gqeberha</title>
+<meta name="description" content="Book Washly's mobile car wash in Gqeberha. We come to you. Free account, plus Fuel Friend: when to fill up and the cheapest diesel near you.">
+<meta property="og:title" content="Washly's · We come to you">
+<meta property="og:description" content="Book a car wash at your home or office in Gqeberha, and save on fuel with Fuel Friend.">
+<meta name="theme-color" content="#0F3B50">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Washly's">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
+<style>
+:root{
+  --teal:#3A93A0; --teal-d:#2C7682; --teal-l:#DDEFF1; --navy:#0F3B50; --ink:#0F3B50; --muted:#5B7480;
+  --bg:#F3F8F9; --card:#FFFFFF; --line:#D6E5E8; --ok:#23845A; --warn:#B9442B; --sun:#F2B33A;
+  --f-head:"Poppins",system-ui,sans-serif; --f-body:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button,.btn,.chip,.nav a{-webkit-user-select:none;user-select:none}
+.offline{position:sticky;top:0;z-index:30;background:var(--warn);color:#fff;text-align:center;font-weight:600;font-size:14px;padding:8px 12px}
+.install{border-color:var(--teal);background:linear-gradient(0deg,#fff,var(--teal-l))}
+.install .ios-share{display:inline-block;vertical-align:-3px;width:18px;height:18px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--f-body);padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+[hidden]{display:none!important}
+h1,h2,h3{font-family:var(--f-head);margin:0;line-height:1.15;letter-spacing:-.01em}
+h1{font-size:clamp(28px,7vw,40px)}h2{font-size:21px}h3{font-size:17px}
+p{margin:0}
+a{color:var(--teal-d)}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:920px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left,0px))}
+/* header */
+.top{background:var(--navy);color:#fff;padding-top:env(safe-area-inset-top,0px)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px}
+.brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-family:var(--f-head);font-weight:700;font-size:21px}
+.brand svg{width:32px;height:32px}
+.brand small{display:block;font:500 11px/1.2 var(--f-body);letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+.topr{display:flex;gap:8px;align-items:center}
+.pill-btn{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:6px 14px;font-weight:600;font-size:14px;text-decoration:none;cursor:pointer}
+.pill-btn.solid{background:var(--teal);border-color:var(--teal)}
+.pill-btn{white-space:nowrap}
+@media (max-width:460px){.topr .pill-btn:not(.solid){display:none}.brand small{display:none}}
+/* nav: bottom bar on phones, tabs on wide screens */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
+.nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;font-weight:600;color:var(--muted);text-decoration:none;padding:4px 2px;border-radius:10px}
+.nav a svg{width:22px;height:22px}
+.nav a[aria-current="page"]{color:var(--teal-d);background:var(--teal-l)}
+@media (min-width:760px){
+  body{padding-bottom:0}
+  .nav{position:static;justify-content:flex-start;gap:4px;background:var(--navy);border:0;padding:0 max(16px,calc((100% - 920px)/2 + 16px)) 0}
+  .nav a{flex:0 0 auto;flex-direction:row;gap:8px;font-size:14px;color:rgba(255,255,255,.75);border-radius:0;padding:10px 14px;border-bottom:3px solid transparent}
+  .nav a svg{width:18px;height:18px}
+  .nav a[aria-current="page"]{color:#fff;background:transparent;border-bottom-color:var(--sun)}
+}
+main{padding:20px 0 40px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.muted{color:var(--muted)}.small{font-size:14px}.tiny{font-size:12.5px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal-d)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--teal);color:#fff;border:0;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer;text-decoration:none;min-height:46px}
+.btn:hover{background:var(--teal-d)}
+.btn.ghost{background:#fff;color:var(--teal-d);border:1.5px solid var(--teal)}
+.btn.warn{background:#fff;color:var(--warn);border:1.5px solid #E6B3A8}
+.btn.sm{padding:6px 12px;min-height:34px;font-size:14px;border-radius:10px}
+.btn:disabled{opacity:.55;cursor:default}
+.btn:focus-visible,.chip:focus-visible,.nav a:focus-visible,input:focus,select:focus,textarea:focus{outline:2px solid var(--teal);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.between{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline}
+label{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weight:600;color:var(--muted)}
+input,select,textarea{background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:16px;color:var(--ink);width:100%;min-width:0}
+textarea{resize:vertical;min-height:70px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}
+.err{color:var(--warn);font-weight:600}
+.okmsg{color:var(--ok);font-weight:600}
+.free{background:var(--teal-l);border-left:4px solid var(--ok);border-radius:10px;padding:12px 14px}
+.hero{background:linear-gradient(135deg,var(--teal) 0%,var(--navy) 100%);color:#fff;border-radius:20px;padding:26px 22px;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;border:30px solid rgba(255,255,255,.08)}
+.hero .btn{background:#fff;color:var(--navy)}
+.hero .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.6)}
+.ticks{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px 16px;font-weight:500}
+.ticks li:before{content:"✓ ";color:var(--sun);font-weight:700}
+/* services */
+.svc{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:10px}
+.svc button,.svc .item{all:unset;box-sizing:border-box;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:4px;cursor:pointer}
+.svc .item{cursor:default}
+.svc button[aria-pressed="true"]{border-color:var(--teal);background:var(--teal-l);box-shadow:0 0 0 2px var(--teal) inset}
+.svc .nm{display:flex;justify-content:space-between;gap:10px;font-weight:700;font-family:var(--f-head);font-size:16px}
+.svc .pr{color:var(--teal-d);white-space:nowrap}
+.svc .ds{font-size:14px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px;cursor:pointer;min-height:40px}
+.chip[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.chip:disabled{opacity:.4;text-decoration:line-through;cursor:not-allowed}
+.chip small{display:block;font-weight:500;font-size:11.5px;opacity:.8}
+.summary{background:var(--navy);color:#fff;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px}
+.summary b{font-family:var(--f-head)}
+.badge{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:2px 9px;background:var(--teal-l);color:var(--teal-d);vertical-align:middle}
+.badge.done{background:#E2F2EA;color:var(--ok)}.badge.cancelled,.badge.missed{background:#F6E3DE;color:var(--warn)}.badge.sun{background:#FCEFD2;color:#7A5200}
+.bk{border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:6px;background:#fff}
+.bk .when{font-family:var(--f-head);font-weight:600}
+.dayh{font-family:var(--f-head);font-weight:600;color:var(--muted);font-size:14px;text-transform:uppercase;letter-spacing:.06em;margin-top:6px}
+.stamps{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.stamps span{aspect-ratio:1;border-radius:50%;border:2px dashed var(--line);display:grid;place-items:center;font-weight:700;color:var(--muted);font-size:14px}
+.stamps span.on{background:var(--teal);border:2px solid var(--teal);color:#fff}
+.stamps span.gift{border-color:var(--sun);color:#7A5200}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.stat b{display:block;font-family:var(--f-head);font-size:24px}
+.stat span{font-size:13px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{text-align:right;white-space:nowrap}
+.tbl{overflow-x:auto}
+tr.best td{background:var(--teal-l)}
+.gauges{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px}
+.gauge{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:2px}
+.gauge.hero2{background:var(--navy);color:#fff;border-color:var(--navy)}
+.gauge .g{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
+.gauge .p{font-family:var(--f-head);font-size:28px;font-weight:700}
+.gauge .p small{font-size:14px;opacity:.7}
+.gauge .d{font-size:13px;opacity:.85}
+.up{color:var(--warn)}.down{color:var(--ok)}
+.news-i{border-bottom:1px solid var(--line);padding-bottom:12px;display:flex;flex-direction:column;gap:4px}
+.news-i:last-child{border:0;padding:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--navy);color:#fff;border-radius:12px;padding:12px 18px;font-weight:600;z-index:50;max-width:90vw;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+@media (min-width:760px){.toast{bottom:24px}}
+.center{max-width:460px;margin:0 auto;width:100%}
+.linkbtn{background:none;border:0;padding:0;color:var(--teal-d);font-weight:600;text-decoration:underline;cursor:pointer}
+details.card summary{cursor:pointer;font-weight:700}
+.foot{color:var(--muted);font-size:13px;text-align:center;padding:12px 0 24px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#/"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#3A93A0"/><path d="M32 13c-8 11-13 18-13 26a13 13 0 0 0 26 0c0-8-5-15-13-26z" fill="#fff"/><path d="M25 40a7 7 0 0 0 7 7" stroke="#3A93A0" stroke-width="3" fill="none" stroke-linecap="round"/></svg><span>Washly's<small>Mobile car wash · Gqeberha</small></span></a>
+    <div class="topr" id="topr"></div>
+  </div>
+</header>
+<div class="offline" id="offline" role="status" hidden>You're offline. You can look around, but booking needs a connection.</div>
+<nav class="nav" id="nav" aria-label="Main"></nav>
+<main class="wrap" id="view" tabindex="-1"></main>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+"use strict";
+/* ================= setup ================= */
+const CFG=window.WASHLYS_CONFIG||{};const CT=CFG.contact||{};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const TZ="Africa/Johannesburg";
+const todayISO=()=>new Intl.DateTimeFormat("en-CA",{timeZone:TZ}).format(new Date());
+const addD=(iso,n)=>{const d=new Date(iso+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+const dow=iso=>new Date(iso+"T00:00:00Z").getUTCDay();
+const fmtD=(iso,o={weekday:"short",day:"numeric",month:"short"})=>new Date(iso+"T00:00:00Z").toLocaleDateString("en-ZA",Object.assign({timeZone:"UTC"},o));
+const R=n=>n==null?"Price to confirm":"R"+(+n).toFixed(2);
+const SIZES={sedan:"Hatch / sedan",suv:"7-seater / SUV",minibus:"Minibus / taxi"};
+const STATUS={booked:"Booked",done:"Done",cancelled:"Cancelled",missed:"Missed"};
+const waLink=(num,text)=>`https://wa.me/${String(num||"").replace(/\D/g,"").replace(/^0/,"27")}${text?"?text="+encodeURIComponent(text):""}`;
+function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,3500)}
+
+/* ================= data layer =================
+   Everything that talks to the database goes through `api`, so the rules live in one place.
+   The real rules (prices, free slots, who sees what) are enforced by the database itself. */
+function supaApi(url,key){
+  const sb=supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  const chk=r=>{if(r.error)throw new Error(r.error.message);return r.data};
+  const back=location.origin+location.pathname;
+  return {
+    async session(){return (await sb.auth.getSession()).data.session},
+    onAuth(cb){sb.auth.onAuthStateChange((ev,s)=>cb(ev,s))},
+    async signUp(email,password,meta){const r=await sb.auth.signUp({email,password,options:{data:meta,emailRedirectTo:back}});if(r.error)throw new Error(r.error.message);return r.data},
+    async signIn(email,password){return chk(await sb.auth.signInWithPassword({email,password}))},
+    async signOut(){await sb.auth.signOut()},
+    async resetPassword(email){return chk(await sb.auth.resetPasswordForEmail(email,{redirectTo:back}))},
+    async updatePassword(password){return chk(await sb.auth.updateUser({password}))},
+    async profile(id){return chk(await sb.from("profiles").select("*").eq("id",id).single())},
+    async updateProfile(id,f){return chk(await sb.from("profiles").update(f).eq("id",id).select().single())},
+    async services(){return chk(await sb.from("services").select("*").order("sort").order("id"))},
+    async settings(){return chk(await sb.from("settings").select("*").eq("id",1).single())},
+    async taken(a,b){return chk(await sb.rpc("taken_slots",{p_from:a,p_to:b}))},
+    async book(o){return chk(await sb.rpc("book",{p_service:o.service,p_date:o.date,p_slot:o.slot,p_address:o.address||"",p_notes:o.notes||"",p_promo:o.promo||"",p_customer:o.customer||null}))},
+    async bookings(){return chk(await sb.from("bookings").select("*").order("date").order("slot"))},
+    async cancel(id){return chk(await sb.rpc("cancel_booking",{p_id:id}))},
+    async move(id,date,slot){return chk(await sb.rpc("move_booking",{p_id:id,p_date:date,p_slot:slot}))},
+    async deleteAccount(){chk(await sb.rpc("delete_my_account"));await sb.auth.signOut()},
+    async profiles(){return chk(await sb.from("profiles").select("*").order("name"))},
+    async updateBooking(id,f){return chk(await sb.from("bookings").update(f).eq("id",id).select().single())},
+    async saveService(s){const {id,...f}=s;return id?chk(await sb.from("services").update(f).eq("id",id).select().single()):chk(await sb.from("services").insert(f).select().single())},
+    async saveSettings(f){return chk(await sb.from("settings").update(f).eq("id",1).select().single())}
+  };
+}
+const rawApi=window.__MOCK_API||(CFG.supabaseUrl&&CFG.supabaseAnonKey&&window.supabase?supaApi(CFG.supabaseUrl,CFG.supabaseAnonKey):null);
+/* Turn "Failed to fetch" / "Load failed" (no signal) into a message people understand. */
+const NET=/failed to fetch|load failed|networkerror|network request failed|fetch failed/i;
+const setOffline=on=>{const el=document.getElementById("offline");if(el)el.hidden=!on};
+const api=rawApi&&new Proxy(rawApi,{get:(t,k)=>typeof t[k]!=="function"?t[k]:async(...a)=>{
+  try{const r=await t[k](...a);setOffline(false);return r}
+  catch(e){if(!navigator.onLine||NET.test(e.message||"")){setOffline(true);throw new Error("No connection. Check your signal and try again.")}throw e}}});
+
+/* ================= state ================= */
+const S={session:null,me:null,services:[],settings:null,bookings:[],profiles:[],taken:[],fuel:null,fuelErr:"",fuelCity:"gqb",
+  book:null,done:null,adminFilter:"upcoming",custQ:"",recovery:false,loading:true};
+try{S.fuelCity=localStorage.getItem("washlys-fuel-city")||"gqb"}catch(e){}
+const qs=new URLSearchParams(location.search);
+const PROMO_IN=(qs.get("promo")||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+const FROM_FF=/fuel/i.test(qs.get("from")||"")||!!PROMO_IN;
+try{if(PROMO_IN)sessionStorage.setItem("washlys-promo",PROMO_IN)}catch(e){}
+const promoSaved=()=>{try{return sessionStorage.getItem("washlys-promo")||""}catch(e){return PROMO_IN}};
+const isAdmin=()=>!!(S.me&&S.me.is_admin);
+const setts=()=>S.settings||{slots:["08:00","10:00","12:00","14:00","16:00"],open_days:[1,2,3,4,5,6],days_ahead:14,loyalty_every:6,size_extra:{sedan:0,suv:20,minibus:50}};
+const extraFor=size=>+((setts().size_extra||{})[size]||0);
+
+async function loadPublic(){
+  if(!api)return;
+  const [sv,st]=await Promise.all([api.services(),api.settings()]);S.services=sv||[];S.settings=st;
+}
+async function loadMe(){
+  if(!api||!S.session){S.me=null;S.bookings=[];S.profiles=[];return}
+  S.me=await api.profile(S.session.user.id);
+  S.bookings=await api.bookings()||[];
+  S.profiles=isAdmin()?(await api.profiles()||[]):[S.me];
+}
+async function loadTaken(){
+  if(!api)return;const t=todayISO();
+  S.taken=(await api.taken(t,addD(t,setts().days_ahead+35)))||[];
+}
+const takenSet=()=>new Set(S.taken.map(x=>(typeof x.date==="string"?x.date.slice(0,10):x.date)+" "+x.slot));
+
+/* ================= routing ================= */
+const ICON={
+  home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  book:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/>',
+  list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  fuel:'<path d="M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16M3 21h13M7 7h5v4H7zM15 10h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V9l-3-3"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  people:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 13.5a6.5 6.5 0 0 1 3.5 6.5"/>',
+  tag:'<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
+  cog:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'
+};
+const ico=n=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
+function navItems(){
+  if(isAdmin())return [["today","Bookings","list"],["customers","Customers","people"],["book","Book","book"],["services","Services","tag"],["fuel","Fuel Friend","fuel"],["settings","Settings","cog"]];
+  if(S.me)return [["home","Home","home"],["book","Book","book"],["washes","My washes","list"],["fuel","Fuel Friend","fuel"],["account","Account","user"]];
+  return [["home","Home","home"],["prices","Prices","tag"],["fuel","Fuel Friend","fuel"],["login","Log in","user"]];
+}
+function route(){
+  const h=(location.hash||"#/").replace(/^#\/?/,"");const [v,arg]=h.split("/");
+  let view=v||(isAdmin()?"today":"home");
+  const allowed=new Set(navItems().map(x=>x[0]).concat(["signup","login","reset","newpass","prices","home"],isAdmin()?["customer"]:[]));
+  if(!allowed.has(view))view=S.me?(isAdmin()?"today":"home"):(["book","washes","account"].includes(view)?"login":"home");
+  if(isAdmin()&&view==="home")view="today";
+  if(S.recovery)view="newpass";
+  return {view,arg};
+}
+function go(path){if(location.hash!=="#/"+path)location.hash="#/"+path;else render()}
+window.addEventListener("hashchange",async()=>{
+  /* Opening Book always fetches the latest prices, opening days and free times. */
+  if(api&&route().view==="book"&&!S.loading){try{await Promise.all([loadPublic(),loadTaken()])}catch(e){}}
+  render();window.scrollTo(0,0)});
+
+function renderChrome(view){
+  $("#nav").innerHTML=navItems().map(([k,l,i])=>`<a href="#/${k}" ${k===view||(k==="customers"&&view==="customer")?'aria-current="page"':""}>${ico(i)}<span>${l}</span></a>`).join("");
+  $("#topr").innerHTML=S.me?`<span class="small" style="opacity:.8">${esc(S.me.name.split(" ")[0]||"")}${isAdmin()?" · admin":""}</span>${isAdmin()?`<button class="pill-btn" data-act="logout">Log out</button>`:""}`
+    :`<a class="pill-btn" href="#/login">Log in</a><a class="pill-btn solid" href="#/signup">Sign up free</a>`;
+}
+async function render(){
+  const {view,arg}=route();renderChrome(view);const V=$("#view");
+  if(S.loading){V.innerHTML=`<p class="muted" style="padding:40px 0;text-align:center">Loading…</p>`;return}
+  const f=VIEWS[view]||VIEWS.home;V.innerHTML=f(arg)||"";
+  const after=AFTER[view];if(after)after(arg);
+}
+
+/* ================= shared bits ================= */
+const notConnected=()=>`<div class="card"><h2>Bookings are opening soon</h2><p>The booking system isn't connected yet. In the meantime, book on WhatsApp or Instagram.</p>${contactRow()}</div>`;
+function contactRow(){return `<div class="row">${CT.whatsapp?`<a class="btn sm" href="${waLink(CT.whatsapp,"Hi Washly's, I'd like to book a wash.")}" target="_blank" rel="noopener">WhatsApp ${esc(CT.phone||"")}</a>`:""}${CT.email?`<a class="btn sm ghost" href="mailto:${esc(CT.email)}">${esc(CT.email)}</a>`:""}${CT.instagram?`<a class="btn sm ghost" href="https://www.instagram.com/${esc(CT.instagram)}/" target="_blank" rel="noopener">@${esc(CT.instagram)}</a>`:""}</div>`}
+const freeNote=()=>`<div class="free"><b>Your account is free and it isn't a subscription.</b> There's no monthly fee and nothing is charged when you sign up. You only pay for the washes you book.</div>`;
+function priceLabel(svc,size){
+  const ex=extraFor(size||"sedan");
+  if(svc.custom)return `R${(+svc.price).toFixed(0)}–R${(+svc.price_max).toFixed(0)}`;
+  if(svc.kind==="monthly")return R(+svc.price+4*ex);
+  return R(+svc.price+ex);
+}
+function serviceList(selectable,size){
+  const groups=[["once","Once-off washes"],["monthly","Monthly packages"]];
+  return groups.map(([k,t])=>{const L=S.services.filter(s=>s.kind===k&&(s.active||isAdmin()));if(!L.length)return"";
+    return `<div class="stack" style="gap:8px"><h3>${t}</h3>${k==="monthly"?`<p class="small muted">4 washes in one month, on the same day and time each week. A package doesn't renew by itself.</p>`:""}<div class="svc">${L.map(s=>{
+      const inner=`<span class="nm"><span>${esc(s.name)}</span><span class="pr">${priceLabel(s,size)}</span></span><span class="ds">${esc(s.description)}</span>`;
+      return selectable?`<button type="button" data-svc="${s.id}" aria-pressed="${S.book&&S.book.svc===s.id}">${inner}</button>`:`<div class="item">${inner}</div>`}).join("")}</div></div>`}).join("");
+}
+function sizeTable(){const e=setts().size_extra||{};return `<table><tbody>${Object.entries(SIZES).map(([k,l])=>`<tr><td>${l}</td><td class="n">${+e[k]?"+ R"+(+e[k]).toFixed(0)+" per wash":"Standard price"}</td></tr>`).join("")}</tbody></table>`}
+const RULES=`<ul class="small" style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px">
+  <li>Once-off washes must be booked at least one day in advance, so we can agree a time that suits you and us.</li>
+  <li>Monthly packages are 4 washes in a month, on the same day and time each week.</li>
+  <li>To move or cancel a wash, do it in the app (or tell us) by the day before at the latest. Otherwise a missed wash is forfeited.</li></ul>`;
+const custOf=id=>S.profiles.find(p=>p.id===id)||(S.me&&S.me.id===id?S.me:null)||{name:"Unknown customer"};
+const myBookings=()=>S.bookings.filter(b=>S.me&&b.customer_id===S.me.id);
+function stampInfo(list){
+  const every=+setts().loyalty_every||0;const n=list.filter(b=>b.kind==="once"&&b.status!=="cancelled"&&b.status!=="missed").length;
+  return {every,n,inCard:every?n%every:0};
+}
+function bookingCard(b,opts={}){
+  const c=custOf(b.customer_id),t=todayISO(),canChange=b.status==="booked"&&(isAdmin()||b.date>t);
+  const badges=[`<span class="badge ${b.status}">${STATUS[b.status]||b.status}</span>`,b.kind==="monthly"?`<span class="badge">Wash ${b.wash_no} of 4</span>`:"",b.reward?`<span class="badge sun">Free loyalty wash</span>`:"",b.promo?`<span class="badge sun">${esc(b.promo)}</span>`:""].join(" ");
+  const price=b.price==null?`<b class="err">Price to confirm</b>`:`${R(b.price)}${b.list_price!=null&&+b.list_price!==+b.price?` <s class="muted small">${R(b.list_price)}</s>`:""}`;
+  return `<div class="bk" data-bk="${b.id}">
+    <div class="between"><span class="when">${opts.noDate?"":fmtD(b.date)+" · "}${esc(b.slot)}</span><span>${badges}</span></div>
+    ${opts.admin?`<div><a href="#/customer/${esc(b.customer_id)}"><b>${esc(c.name)}</b></a> <span class="tiny muted">${esc(c.account_no||"")}</span></div>`:""}
+    <div>${esc(b.service_name)} · ${SIZES[b.car_size]||""} · ${price}</div>
+    ${opts.admin?`<div class="small muted">${esc([c.car,c.reg].filter(Boolean).join(" · "))}</div>`:""}
+    <div class="small muted">${esc(b.address)}</div>
+    ${b.notes?`<div class="small">Note: ${esc(b.notes)}</div>`:""}
+    ${opts.admin&&c.cell?`<div class="row small"><a href="tel:${esc(c.cell.replace(/\s/g,""))}">Call ${esc(c.cell)}</a><a href="${waLink(c.cell)}" target="_blank" rel="noopener">WhatsApp</a></div>`:""}
+    ${canChange?`<div class="row">${opts.admin?`<button class="btn sm" data-act="status" data-st="done">Done</button><button class="btn sm ghost" data-act="status" data-st="missed">Missed</button>`:""}<button class="btn sm ghost" data-act="move">Move</button><button class="btn sm warn" data-act="cancel">Cancel</button>${opts.admin?`<button class="btn sm ghost" data-act="price">Set price</button>`:""}</div>`:
+      (b.status==="booked"&&!isAdmin()?`<div class="tiny muted">It's too late to change this in the app. Please contact us.</div>`:"")}
+    <div class="mover"></div>
+  </div>`;
+}
+
+/* ================= views ================= */
+const VIEWS={},AFTER={};
+
+VIEWS.home=()=>{
+  if(!S.me)return `<div class="stack">
+    <section class="hero">
+      <span class="eyebrow" style="color:#BFE6EA">Vehicle wash services · ${esc(CT.area||"Gqeberha")}</span>
+      <h1>We come to you.</h1>
+      <p>Book a wash at your home or office in a few taps. Exterior washes, tyre polish, vacuuming and interior shine.</p>
+      <ul class="ticks"><li>Exterior wash</li><li>Tyre polish</li><li>Vacuuming</li><li>Interior shine</li></ul>
+      <div class="row"><a class="btn" href="#/signup">Create a free account</a><a class="btn ghost" href="#/login">Log in</a></div>
+      <p class="small" style="opacity:.9">Free account. Not a subscription: you only pay for the washes you book.</p>
+    </section>
+    ${installCard()}
+    ${FROM_FF||PROMO_IN?`<div class="card" style="border-color:var(--sun)"><b>Welcome from Fuel Friend.</b><p>${PROMO_IN?`Your code <b>${esc(PROMO_IN)}</b> gives you 10% off your first once-off wash. It's filled in for you when you book.`:"Create a free account to book your first wash."}</p></div>`:""}
+    ${api?"":notConnected()}
+    <div class="card"><div class="between"><h2>Prices</h2><a href="#/prices" class="small">Full price list</a></div>${serviceList(false)}</div>
+    ${fuelTeaser()}
+    <div class="card"><h2>Contact us</h2>${contactRow()}</div>
+  </div>`;
+  const mine=myBookings(),t=todayISO(),next=mine.filter(b=>b.status==="booked"&&b.date>=t)[0],st=stampInfo(mine);
+  return `<div class="stack">
+    <div><span class="eyebrow">Account ${esc(S.me.account_no||"")}</span><h1>Hi ${esc(S.me.name.split(" ")[0]||"there")}</h1></div>
+    ${S.done?`<div class="card" style="border-color:var(--ok)"><b class="okmsg">${esc(S.done)}</b></div>`:""}
+    ${installCard()}
+    <div class="card"><h2>Your next wash</h2>${next?bookingCard(next):`<p class="muted">Nothing booked yet.</p>`}<div class="row"><a class="btn" href="#/book">Book a wash</a>${next?`<a class="btn ghost" href="#/washes">All my washes</a>`:""}</div></div>
+    ${st.every?`<div class="card"><div class="between"><h2>Loyalty card</h2><span class="small muted">Every ${st.every}th once-off wash is free</span></div>
+      <div class="stamps">${Array.from({length:st.every},(_,i)=>`<span class="${i<st.inCard?"on":""} ${i===st.every-1?"gift":""}">${i===st.every-1?"Free":i+1}</span>`).join("")}</div>
+      <p class="small muted">${st.inCard===st.every-1?"Your next once-off wash is free!":`${st.every-1-st.inCard} more once-off wash${st.every-1-st.inCard===1?"":"es"} until a free one.`}</p></div>`:""}
+    ${fuelTeaser()}
+  </div>`;
+};
+AFTER.home=()=>{S.done=null;fuelTeaserFill()};
+
+VIEWS.prices=()=>`<div class="stack"><h1>Price list</h1><div class="card">${serviceList(false)}</div>
+  <div class="card"><h2>Vehicle size, per wash</h2>${sizeTable()}</div><div class="card"><h2>Good to know</h2>${RULES}</div>
+  ${api?`<div class="row"><a class="btn" href="#/${S.me?"book":"signup"}">${S.me?"Book a wash":"Create a free account to book"}</a></div>`:notConnected()}</div>`;
+
+/* ---------- install on the home screen ---------- */
+const UA=navigator.userAgent;
+const isIOS=/iPhone|iPad|iPod/.test(UA)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const inAppBrowser=/Instagram|FBAN|FBAV|FB_IAB|Line\/|WhatsApp|TikTok/i.test(UA);
+const isStandalone=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+let installEvt=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;const c=$("#installCard");if(c)c.outerHTML=installCard()});
+window.addEventListener("appinstalled",()=>{installEvt=null;const c=$("#installCard");if(c)c.remove();toast("Washly's is on your home screen")});
+const installHidden=()=>{try{return localStorage.getItem("washlys-install-hidden")==="1"}catch(e){return false}};
+function installCard(){
+  if(isStandalone()||installHidden())return "";
+  const share=`<svg class="ios-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Share"><path d="M12 15V3M8 7l4-4 4 4M5 11v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9"/></svg>`;
+  let body="";
+  if(installEvt)body=`<p class="small">Add it to your home screen: it opens full-screen like any other app, and there's nothing to download from an app store.</p><div class="row"><button class="btn sm" data-act="install">Install the app</button></div>`;
+  else if(isIOS&&inAppBrowser)body=`<p class="small">To put Washly's on your home screen, open this page in Safari first: tap <b>⋯</b> or the compass icon, then <b>Open in browser</b>.</p>`;
+  else if(isIOS)body=`<p class="small">On your iPhone: tap ${share} <b>Share</b> at the bottom of Safari, then <b>Add to Home Screen</b>. Washly's then opens full-screen like any other app.</p>`;
+  else if(/Android/i.test(UA))body=`<p class="small">In Chrome, tap <b>⋮</b> at the top right, then <b>Add to Home screen</b> or <b>Install app</b>.</p>`;
+  else return "";
+  return `<div class="card install" id="installCard"><div class="between"><h3>Get the Washly's app</h3><button class="linkbtn small" data-act="hideInstall">Not now</button></div>${body}</div>`;
+}
+document.addEventListener("click",async e=>{
+  if(e.target.closest("[data-act=install]")&&installEvt){installEvt.prompt();const r=await installEvt.userChoice;installEvt=null;if(r.outcome!=="accepted"){const c=$("#installCard");if(c)c.remove()}}
+  if(e.target.closest("[data-act=hideInstall]")){try{localStorage.setItem("washlys-install-hidden","1")}catch(x){}const c=$("#installCard");if(c)c.remove()}
+});
+
+/* ---------- sign up / log in ---------- */
+VIEWS.signup=()=>!api?notConnected():`<div class="center stack">
+  <h1>Create your free account</h1>
+  ${freeNote()}
+  <form class="card" id="fSignup" novalidate>
+    <div class="grid">
+      <label>Full name<input name="name" autocomplete="name" required></label>
+      <label>Cell number<input name="cell" type="tel" inputmode="tel" autocomplete="tel" placeholder="e.g. 082 555 0134" required></label>
+      <label>Email<input name="email" type="email" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" required></label>
+      <label>Password (at least 8 characters)<input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
+      <label>Street address<input name="address" autocomplete="street-address" placeholder="e.g. 14 Heugh Rd" required></label>
+      <label>Suburb<input name="suburb" placeholder="e.g. Walmer"></label>
+      <label>Car<input name="car" placeholder="e.g. VW Polo, red" required></label>
+      <label>Registration (optional)<input name="reg" placeholder="e.g. HGF 123 EC" autocapitalize="characters" autocorrect="off" spellcheck="false"></label>
+      <label>Vehicle size<select name="car_size">${Object.entries(SIZES).map(([k,l])=>`<option value="${k}">${l}${extraFor(k)?` (+R${extraFor(k)} per wash)`:""}</option>`).join("")}</select></label>
+    </div>
+    <p class="tiny muted">We use your details only to do your washes and contact you about them. You can delete your account at any time in Account.</p>
+    <p class="err" id="suErr" role="alert" hidden></p>
+    <button class="btn" type="submit">Create my free account</button>
+    <p class="small">Already have an account? <a href="#/login">Log in</a></p>
+  </form></div>`;
+AFTER.signup=()=>{const f=$("#fSignup");if(!f)return;f.onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(f));const er=$("#suErr");
+  const need=[["name","your name"],["cell","a cell number"],["email","your email"],["password","a password"],["address","your street address"],["car","your car"]].filter(([k])=>!String(v[k]||"").trim());
+  const fail=m=>{er.textContent=m;er.hidden=false};
+  if(need.length)return fail("Please add "+need.map(x=>x[1]).join(", ")+".");
+  if(String(v.cell).replace(/\D/g,"").length<9)return fail("Please check the cell number.");
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email))return fail("Please check the email address.");
+  if(String(v.password).length<8)return fail("Your password needs at least 8 characters.");
+  const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Creating your account…";
+  try{const meta={name:v.name.trim(),cell:v.cell.trim(),address:v.address.trim(),suburb:v.suburb.trim(),car:v.car.trim(),reg:String(v.reg||"").trim().toUpperCase(),car_size:v.car_size,source:FROM_FF?"Fuel Friend":"App"};
+    const r=await api.signUp(v.email.trim(),v.password,meta);
+    if(!r.session){$("#view").innerHTML=`<div class="center card"><h1>Check your email</h1><p>We've sent a link to <b>${esc(v.email)}</b>. Tap it to confirm your account, then log in here.</p><a class="btn" href="#/login">Log in</a></div>`;return}
+    S.session=r.session;await loadMe();S.done="Welcome! Your free account is ready.";go(promoSaved()?"book":"home");
+  }catch(x){fail(/registered|exists/i.test(x.message)?"There's already an account with that email. Try logging in.":x.message);btn.disabled=false;btn.textContent="Create my free account"}};};
+
+VIEWS.login=()=>!api?notConnected():`<div class="center stack"><h1>Log in</h1>
+  <form class="card" id="fLogin" novalidate>
+    <label>Email<input name="email" type="email" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" required></label>
+    <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+    <p class="err" id="liErr" role="alert" hidden></p>
+    <button class="btn" type="submit">Log in</button>
+    <p class="small"><a href="#/reset">Forgot your password?</a> · New here? <a href="#/signup">Create a free account</a></p>
+  </form></div>`;
+AFTER.login=()=>{const f=$("#fLogin");if(!f)return;f.onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(f)),er=$("#liErr"),btn=f.querySelector("button");
+  btn.disabled=true;try{const r=await api.signIn(String(v.email).trim(),v.password);S.session=r.session||await api.session();await loadMe();go(isAdmin()?"today":(promoSaved()?"book":"home"))}
+  catch(x){er.textContent=/invalid/i.test(x.message)?"That email and password don't match. Try again or reset your password.":/confirm/i.test(x.message)?"Please confirm your email first: tap the link we sent you.":x.message;er.hidden=false;btn.disabled=false}}};
+
+VIEWS.reset=()=>!api?notConnected():`<div class="center stack"><h1>Reset your password</h1><form class="card" id="fReset" novalidate>
+  <label>Your account's email<input name="email" type="email" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" required></label><p id="rsMsg" role="status"></p>
+  <button class="btn" type="submit">Email me a reset link</button></form></div>`;
+AFTER.reset=()=>{const f=$("#fReset");if(!f)return;f.onsubmit=async e=>{e.preventDefault();const em=String(new FormData(f).get("email")).trim(),m=$("#rsMsg");
+  try{await api.resetPassword(em);m.className="okmsg";m.textContent="If there's an account with that email, a reset link is on its way. Check your inbox and spam folder."}catch(x){m.className="err";m.textContent=x.message}}};
+
+VIEWS.newpass=()=>`<div class="center stack"><h1>Choose a new password</h1><form class="card" id="fNew" novalidate>
+  <label>New password (at least 8 characters)<input name="pw" type="password" autocomplete="new-password" minlength="8"></label><p id="npMsg" role="status"></p>
+  <button class="btn" type="submit">Save password</button></form></div>`;
+AFTER.newpass=()=>{$("#fNew").onsubmit=async e=>{e.preventDefault();const pw=String(new FormData(e.target).get("pw")),m=$("#npMsg");
+  if(pw.length<8){m.className="err";m.textContent="Use at least 8 characters.";return}
+  try{await api.updatePassword(pw);S.recovery=false;toast("Password saved");await loadMe();go(isAdmin()?"today":"home")}catch(x){m.className="err";m.textContent=x.message}}};
+
+/* ---------- book ---------- */
+function bookState(customerId){
+  if(!S.book||S.book.customer!==customerId)S.book={svc:null,date:null,slot:null,address:"",notes:"",promo:customerId?"":promoSaved(),customer:customerId||null};
+  return S.book;
+}
+function bookableDays(adminMode){
+  const st=setts(),t=todayISO(),out=[];
+  for(let i=adminMode?0:1;i<=st.days_ahead;i++){const d=addD(t,i);if(st.open_days.includes(dow(d)))out.push(d)}
+  return out;
+}
+function slotFree(d,s,svc,ts){const weeks=svc&&svc.kind==="monthly"?4:1;for(let i=0;i<weeks;i++)if(ts.has(addD(d,7*i)+" "+s))return false;return true}
+function estimate(b,svc,cust){
+  if(!svc)return null;const ex=extraFor(cust.car_size),list=S.bookings.filter(x=>x.customer_id===cust.id&&x.status!=="cancelled");
+  if(svc.custom)return {each:null,total:null,text:`Price to confirm (R${(+svc.price).toFixed(0)}–R${(+svc.price_max).toFixed(0)} for the month). We'll agree it with you.`};
+  if(svc.kind==="monthly"){const tot=+svc.price+4*ex;return {total:tot,text:`${R(tot)} for 4 washes${ex?` (includes +R${ex} per wash for ${SIZES[cust.car_size].toLowerCase()})`:""}`}}
+  const base=+svc.price+ex,st=stampInfo(list);
+  if(st.every&&st.inCard===st.every-1)return {total:0,text:`Free! This is your ${st.every}th once-off wash.`};
+  if(b.promo&&!list.length)return {total:base,text:`${R(base)}${ex?` (includes +R${ex} for ${SIZES[cust.car_size].toLowerCase()})`:""}. Code ${esc(b.promo)}: discount applied when you confirm.`};
+  return {total:base,text:`${R(base)}${ex?` (includes +R${ex} for ${SIZES[cust.car_size].toLowerCase()})`:""}`};
+}
+VIEWS.book=(arg)=>{
+  if(!api)return notConnected();
+  if(!S.me)return `<div class="center card"><h2>Log in to book</h2>${freeNote()}<div class="row"><a class="btn" href="#/signup">Create a free account</a><a class="btn ghost" href="#/login">Log in</a></div></div>`;
+  const adminMode=isAdmin();
+  if(adminMode&&!S.book?.customer&&!arg)return `<div class="stack"><h1>Book for a customer</h1><p class="muted">Every booking belongs to a customer's free account. Pick the customer:</p>
+    <label>Search<input id="bkFind" placeholder="Name, cell, account number or registration" autocomplete="off"></label><div id="bkFindList" class="stack" style="gap:8px"></div>
+    <p class="small muted">New customer? Ask them to sign up on the app (it takes a minute), then book for them here.</p></div>`;
+  const b=bookState(adminMode?(arg||S.book.customer):null),cust=adminMode?custOf(b.customer):S.me;
+  const svc=S.services.find(s=>s.id===b.svc),ts=takenSet(),days=bookableDays(adminMode);
+  const est=estimate(b,svc,cust);
+  return `<form class="stack" id="fBook" novalidate>
+    <div><h1>${adminMode?`Book for ${esc(cust.name)}`:"Book a wash"}</h1>${adminMode?`<p class="muted">${esc(cust.account_no||"")} · ${esc(cust.car||"")} · ${SIZES[cust.car_size]||""} · <button type="button" class="linkbtn" data-act="bkOther">Other customer</button></p>`:`<p class="muted">We come to you. ${esc(cust.car||"")} · ${SIZES[cust.car_size]||""} <a href="#/account" class="small">change</a></p>`}</div>
+    <div class="card"><span class="eyebrow">1 · What would you like?</span>${serviceList(true,cust.car_size)}</div>
+    <div class="card"><span class="eyebrow">2 · ${svc&&svc.kind==="monthly"?"First wash day (then the same day for 4 weeks)":"Day"}</span>
+      <div class="chips">${days.map(d=>`<button type="button" class="chip" data-day="${d}" aria-pressed="${b.date===d}">${fmtD(d)}</button>`).join("")}</div>
+      ${b.date?`<span class="eyebrow">Time</span><div class="chips">${setts().slots.map(s=>{const free=slotFree(b.date,s,svc,ts);return `<button type="button" class="chip" data-slot="${s}" aria-pressed="${b.slot===s}" ${free?"":"disabled"}>${s}<small>${free?"Free":"Taken"}</small></button>`}).join("")}</div>
+        ${svc&&svc.kind==="monthly"&&b.slot?`<p class="small muted">Your 4 washes: ${[0,1,2,3].map(i=>fmtD(addD(b.date,7*i),{day:"numeric",month:"short"})).join(", ")} at ${b.slot}.</p>`:""}`:`<p class="small muted">${adminMode?"":"Book at least one day in advance. "}Pick a day to see free times.</p>`}
+    </div>
+    <div class="card"><span class="eyebrow">3 · Where and anything else</span>
+      <div class="grid"><label>Address for this wash<input name="address" value="${esc(b.address||[cust.address,cust.suburb].filter(Boolean).join(", "))}"></label>
+      <label>Notes for us (optional)<input name="notes" value="${esc(b.notes)}" placeholder="Gate code, where the tap is…"></label>
+      ${!svc||svc.kind==="once"?`<label>Promo code (optional)<input name="promo" value="${esc(b.promo)}" placeholder="e.g. FUELFRIEND10" autocapitalize="characters"></label>`:""}</div>
+    </div>
+    <div class="summary">${svc&&b.date&&b.slot?`<b>${esc(svc.name)} · ${fmtD(b.date,{weekday:"long",day:"numeric",month:"long"})} at ${b.slot}</b><span>${est.text}</span>`:`<span>Choose a service, day and time.</span>`}
+      <span class="small" style="opacity:.85">Nothing is charged in the app. ${svc&&svc.kind==="monthly"?"This package is 4 washes this month and doesn't renew by itself.":"You pay for this wash only."}</span></div>
+    <p class="err" id="bkErr" role="alert" hidden></p>
+    <div class="row"><button class="btn" type="submit" ${svc&&b.date&&b.slot?"":"disabled"}>Confirm booking</button></div>
+    <div class="card"><h3>Good to know</h3>${RULES}</div>
+  </form>`;
+};
+AFTER.book=(arg)=>{
+  const find=$("#bkFind");
+  if(find){const draw=()=>{const q=find.value.trim().toLowerCase();const L=S.profiles.filter(p=>!p.is_admin&&[p.name,p.cell,p.account_no,p.reg,p.email].join(" ").toLowerCase().includes(q)).slice(0,12);
+      $("#bkFindList").innerHTML=L.map(p=>`<a class="bk" href="#/book/${esc(p.id)}"><b>${esc(p.name)}</b><span class="small muted">${esc(p.account_no)} · ${esc(p.cell)} · ${esc(p.car)}</span></a>`).join("")||`<p class="muted">No customers found.</p>`};
+    find.oninput=draw;draw();find.focus();return}
+  const f=$("#fBook");if(!f)return;const b=S.book;
+  const keep=()=>{const v=Object.fromEntries(new FormData(f));b.address=v.address??b.address;b.notes=v.notes??b.notes;if("promo" in v)b.promo=String(v.promo).toUpperCase().trim()};
+  f.onclick=e=>{const t=e.target.closest("[data-svc],[data-day],[data-slot],[data-act]");if(!t)return;keep();
+    if(t.dataset.svc){b.svc=+t.dataset.svc;b.slot=null}else if(t.dataset.day){b.date=t.dataset.day;b.slot=null}else if(t.dataset.slot)b.slot=t.dataset.slot;
+    else if(t.dataset.act==="bkOther"){S.book=null;go("book");return}
+    const y=window.scrollY;render();window.scrollTo(0,y)};
+  f.onsubmit=async e=>{e.preventDefault();keep();const er=$("#bkErr"),btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Booking…";
+    try{const rows=await api.book({service:b.svc,date:b.date,slot:b.slot,address:b.address,notes:b.notes,promo:b.promo,customer:isAdmin()?b.customer:null});
+      const first=rows[0];try{sessionStorage.removeItem("washlys-promo")}catch(x){}
+      const tot=rows.every(r=>r.price!=null)?rows.reduce((a,r)=>a+ +r.price,0):null;
+      S.done=`Booked: ${first.service_name}, ${fmtD(first.date,{weekday:"long",day:"numeric",month:"long"})} at ${first.slot}${rows.length>1?` (and the next 3 weeks)`:""}. ${tot==null?"We'll confirm the price with you.":tot===0?"This one's free!":"Total "+R(tot)+"."}`;
+      const who=b.customer;S.book=null;await Promise.all([loadMe(),loadTaken()]);
+      if(isAdmin()){toast(S.done);S.done=null;go("customer/"+who)}else go("home");
+    }catch(x){er.textContent=x.message;er.hidden=false;btn.disabled=false;btn.textContent="Confirm booking";await loadTaken();}};
+};
+
+/* ---------- my washes (customer) ---------- */
+VIEWS.washes=()=>{
+  const t=todayISO(),mine=myBookings(),up=mine.filter(b=>b.status==="booked"&&b.date>=t),past=mine.filter(b=>!(b.status==="booked"&&b.date>=t)).reverse();
+  return `<div class="stack"><div class="between"><h1>My washes</h1><a class="btn sm" href="#/book">Book a wash</a></div>
+    <p class="small muted">Move or cancel a wash up to the day before. On the day itself, please contact us: a missed wash is forfeited.</p>
+    <h2>Coming up</h2><div class="stack" style="gap:10px" id="bkList">${up.map(b=>bookingCard(b)).join("")||`<p class="muted">Nothing booked.</p>`}</div>
+    ${past.length?`<h2>Past and cancelled</h2><div class="stack" style="gap:10px">${past.slice(0,30).map(b=>bookingCard(b)).join("")}</div>`:""}
+    <div class="card"><h3>Need help?</h3>${contactRow()}</div></div>`;
+};
+async function bookingAction(e){
+  const btn=e.target.closest("[data-act]");if(!btn)return;const card=btn.closest("[data-bk]");if(!card)return;
+  const id=+card.dataset.bk,b=S.bookings.find(x=>x.id===id);if(!b)return;const act=btn.dataset.act;
+  try{
+    if(act==="cancel"){if(btn.dataset.sure!=="1"){btn.dataset.sure="1";btn.textContent="Tap again to cancel";return}await api.cancel(id);toast("Wash cancelled")}
+    else if(act==="status"){await api.updateBooking(id,{status:btn.dataset.st});toast("Marked "+STATUS[btn.dataset.st].toLowerCase())}
+    else if(act==="price"){const m=card.querySelector(".mover");m.innerHTML=`<div class="row"><label style="flex:1">Price (R)<input type="number" min="0" step="0.01" value="${b.price??""}" data-in="price"></label><button class="btn sm" data-act="savePrice">Save</button></div>`;return}
+    else if(act==="savePrice"){const v=card.querySelector("[data-in=price]").value;await api.updateBooking(id,{price:v===""?null:+v});toast("Price saved")}
+    else if(act==="move"){await loadTaken();const ts=takenSet(),days=bookableDays(isAdmin()).concat(isAdmin()?[]:[]);const m=card.querySelector(".mover");
+      m.innerHTML=`<div class="grid"><label>New day<select data-in="day">${days.map(d=>`<option value="${d}" ${d===b.date?"selected":""}>${fmtD(d)}</option>`).join("")}</select></label>
+        <label>New time<select data-in="slot"></select></label></div><div class="row"><button class="btn sm" data-act="saveMove">Move this wash</button><button class="btn sm ghost" data-act="closeMove">Keep it</button></div>`;
+      const ds=m.querySelector("[data-in=day]"),ss=m.querySelector("[data-in=slot]");
+      const fill=()=>{ss.innerHTML=setts().slots.map(s=>{const mine=ds.value===b.date&&s===b.slot,free=mine||!ts.has(ds.value+" "+s);return `<option value="${s}" ${free?"":"disabled"} ${mine?"selected":""}>${s}${free?"":" (taken)"}</option>`}).join("")};ds.onchange=fill;fill();return}
+    else if(act==="closeMove"){card.querySelector(".mover").innerHTML="";return}
+    else if(act==="saveMove"){const d=card.querySelector("[data-in=day]").value,s=card.querySelector("[data-in=slot]").value;await api.move(id,d,s);toast(`Moved to ${fmtD(d)} at ${s}`)}
+    else return;
+    await Promise.all([loadMe(),loadTaken()]);const y=window.scrollY;render();window.scrollTo(0,y);
+  }catch(x){toast(x.message)}
+}
+document.addEventListener("click",e=>{if(e.target.closest("[data-bk] [data-act]"))bookingAction(e);if(e.target.closest("[data-act=logout]"))logout()});
+async function logout(){await api.signOut();S.session=null;S.me=null;S.bookings=[];S.profiles=[];S.book=null;go("")}
+
+/* ---------- account ---------- */
+VIEWS.account=()=>{const m=S.me;return `<div class="stack"><div><span class="eyebrow">Account ${esc(m.account_no||"")}</span><h1>Your account</h1></div>
+  ${freeNote()}
+  <form class="card" id="fAcct" novalidate><h2>Your details</h2><div class="grid">
+    <label>Full name<input name="name" value="${esc(m.name)}"></label><label>Cell number<input name="cell" type="tel" value="${esc(m.cell)}"></label>
+    <label>Street address<input name="address" value="${esc(m.address)}"></label><label>Suburb<input name="suburb" value="${esc(m.suburb)}"></label>
+    <label>Car<input name="car" value="${esc(m.car)}"></label><label>Registration<input name="reg" value="${esc(m.reg)}"></label>
+    <label>Vehicle size<select name="car_size">${Object.entries(SIZES).map(([k,l])=>`<option value="${k}" ${m.car_size===k?"selected":""}>${l}${extraFor(k)?` (+R${extraFor(k)} per wash)`:""}</option>`).join("")}</select></label>
+    <label>Email<input value="${esc(m.email)}" disabled></label></div>
+    <p id="acMsg" role="status"></p><button class="btn" type="submit">Save my details</button></form>
+  <form class="card" id="fPw" novalidate><h2>Change password</h2><label>New password (at least 8 characters)<input name="pw" type="password" autocomplete="new-password"></label><p id="pwMsg" role="status"></p><button class="btn ghost" type="submit">Change password</button></form>
+  <div class="card"><h2>Log out or delete</h2><div class="row"><button class="btn ghost" data-act="logout">Log out</button><button class="btn warn" id="delAcct">Delete my account</button></div>
+  <p class="small muted">Deleting your account removes your details and your wash history from Washly's for good, and cancels any washes you've booked.</p></div></div>`};
+AFTER.account=()=>{
+  $("#fAcct").onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(e.target)),m=$("#acMsg");
+    if(!v.name.trim()||String(v.cell).replace(/\D/g,"").length<9){m.className="err";m.textContent="Please add your name and a valid cell number.";return}
+    try{v.reg=String(v.reg).toUpperCase();S.me=await api.updateProfile(S.me.id,{name:v.name.trim(),cell:v.cell.trim(),address:v.address.trim(),suburb:v.suburb.trim(),car:v.car.trim(),reg:v.reg.trim(),car_size:v.car_size});m.className="okmsg";m.textContent="Saved."}catch(x){m.className="err";m.textContent=x.message}};
+  $("#fPw").onsubmit=async e=>{e.preventDefault();const pw=String(new FormData(e.target).get("pw")),m=$("#pwMsg");if(pw.length<8){m.className="err";m.textContent="Use at least 8 characters.";return}
+    try{await api.updatePassword(pw);m.className="okmsg";m.textContent="Password changed.";e.target.reset()}catch(x){m.className="err";m.textContent=x.message}};
+  $("#delAcct").onclick=async e=>{const b=e.target;if(b.dataset.sure!=="1"){b.dataset.sure="1";b.textContent="Tap again to delete for good";return}
+    try{await api.deleteAccount();S.session=null;S.me=null;S.bookings=[];toast("Your account has been deleted");go("")}catch(x){toast(x.message)}};
+};
+
+/* ================= admin ================= */
+VIEWS.today=()=>{
+  const t=todayISO(),all=S.bookings,f=S.adminFilter;
+  const monthStart=t.slice(0,8)+"01",weekEnd=addD(t,7);
+  const doneMonth=all.filter(b=>b.status==="done"&&b.date>=monthStart),rev=doneMonth.reduce((a,b)=>a+(+b.price||0),0);
+  const sel=all.filter(b=>f==="today"?b.date===t:f==="upcoming"?b.date>=t&&b.status==="booked":f==="past"?b.date<t:f==="toconfirm"?b.price==null&&b.status!=="cancelled":true);
+  const ordered=f==="past"?sel.slice().reverse():sel;
+  const byDay={};ordered.forEach(b=>(byDay[b.date]??=[]).push(b));
+  return `<div class="stack"><div class="between"><h1>Bookings</h1><button class="btn sm ghost" data-act="refresh">Refresh</button></div>
+    <div class="stats">
+      <div class="stat"><b>${all.filter(b=>b.date===t&&b.status==="booked").length}</b><span>washes today</span></div>
+      <div class="stat"><b>${all.filter(b=>b.date>=t&&b.date<=weekEnd&&b.status==="booked").length}</b><span>booked, next 7 days</span></div>
+      <div class="stat"><b>R${rev.toFixed(0)}</b><span>earned this month (done)</span></div>
+      <div class="stat"><b>${S.profiles.filter(p=>!p.is_admin&&String(p.created_at).slice(0,7)===t.slice(0,7)).length}</b><span>new accounts this month</span></div>
+      <div class="stat"><b>${all.filter(b=>b.promo==="FUELFRIEND10").length}</b><span>FUELFRIEND10 bookings</span></div>
+    </div>
+    <div class="chips" role="group" aria-label="Show">${[["upcoming","Upcoming"],["today","Today"],["toconfirm","Price to confirm"],["past","Past"],["all","All"]].map(([k,l])=>`<button class="chip" data-filter="${k}" aria-pressed="${f===k}">${l}</button>`).join("")}</div>
+    ${Object.keys(byDay).length?Object.entries(byDay).map(([d,L])=>`<div class="dayh">${d===t?"Today · ":""}${fmtD(d,{weekday:"long",day:"numeric",month:"long"})}</div><div class="stack" style="gap:10px">${L.map(b=>bookingCard(b,{admin:true,noDate:true})).join("")}</div>`).join(""):`<p class="muted">No bookings here.</p>`}
+  </div>`;
+};
+AFTER.today=()=>{$("#view").querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{S.adminFilter=b.dataset.filter;render()});
+  const r=$("[data-act=refresh]");if(r)r.onclick=async()=>{await loadMe();render();toast("Up to date")}};
+
+VIEWS.customers=()=>`<div class="stack"><h1>Customers</h1><label>Search<input id="cFind" value="${esc(S.custQ)}" placeholder="Name, cell, account number, registration or suburb" autocomplete="off"></label><div id="cList" class="stack" style="gap:8px"></div></div>`;
+AFTER.customers=()=>{const i=$("#cFind");const draw=()=>{S.custQ=i.value;const q=i.value.trim().toLowerCase();
+  const L=S.profiles.filter(p=>!p.is_admin&&[p.name,p.cell,p.account_no,p.reg,p.suburb,p.email].join(" ").toLowerCase().includes(q));
+  $("#cList").innerHTML=`<p class="small muted">${L.length} customer${L.length===1?"":"s"}</p>`+L.map(p=>{const bs=S.bookings.filter(b=>b.customer_id===p.id),done=bs.filter(b=>b.status==="done");
+    return `<a class="bk" href="#/customer/${esc(p.id)}" style="text-decoration:none;color:inherit"><div class="between"><b>${esc(p.name||"(no name)")}</b><span class="tiny muted">${esc(p.account_no)}</span></div><span class="small muted">${esc([p.cell,p.suburb,p.car,p.reg].filter(Boolean).join(" · "))}</span><span class="small">${done.length} wash${done.length===1?"":"es"} done · ${bs.filter(b=>b.status==="booked").length} booked${p.source==="Fuel Friend"?' · <span class="badge sun">Fuel Friend</span>':""}</span></a>`}).join("")};
+  i.oninput=draw;draw()};
+
+VIEWS.customer=(id)=>{
+  const p=S.profiles.find(x=>x.id===id);if(!p)return `<p>Customer not found. <a href="#/customers">Back to customers</a></p>`;
+  const bs=S.bookings.filter(b=>b.customer_id===id),done=bs.filter(b=>b.status==="done"),spent=done.reduce((a,b)=>a+(+b.price||0),0),t=todayISO(),st=stampInfo(bs);
+  return `<div class="stack"><a href="#/customers" class="small">← All customers</a>
+    <div class="between"><div><span class="eyebrow">Free account ${esc(p.account_no)} · joined ${fmtD(String(p.created_at).slice(0,10),{day:"numeric",month:"short",year:"numeric"})} via ${esc(p.source)}</span><h1>${esc(p.name)}</h1></div><a class="btn" href="#/book/${esc(p.id)}">Book for ${esc(p.name.split(" ")[0])}</a></div>
+    <div class="stats"><div class="stat"><b>${done.length}</b><span>washes done</span></div><div class="stat"><b>R${spent.toFixed(0)}</b><span>total spent</span></div><div class="stat"><b>${done.length?fmtD(done[done.length-1].date,{day:"numeric",month:"short"}):"–"}</b><span>last wash</span></div>${st.every?`<div class="stat"><b>${st.inCard}/${st.every-1}</b><span>stamps to a free wash</span></div>`:""}</div>
+    <div class="row small">${p.cell?`<a href="tel:${esc(p.cell.replace(/\s/g,""))}">Call ${esc(p.cell)}</a> · <a href="${waLink(p.cell)}" target="_blank" rel="noopener">WhatsApp</a> · `:""}<a href="mailto:${esc(p.email)}">${esc(p.email)}</a></div>
+    <form class="card" id="fCust" novalidate><h2>Details</h2><div class="grid">
+      ${["name","cell","address","suburb","car","reg"].map(k=>`<label>${{name:"Name",cell:"Cell",address:"Address",suburb:"Suburb",car:"Car",reg:"Registration"}[k]}<input name="${k}" value="${esc(p[k])}"></label>`).join("")}
+      <label>Vehicle size<select name="car_size">${Object.entries(SIZES).map(([k,l])=>`<option value="${k}" ${p.car_size===k?"selected":""}>${l}</option>`).join("")}</select></label></div>
+      <p id="cMsg" role="status"></p><button class="btn ghost" type="submit">Save details</button></form>
+    <h2>Bookings</h2><div class="stack" style="gap:10px">${bs.slice().sort((a,b)=>(b.date+b.slot).localeCompare(a.date+a.slot)).map(b=>bookingCard(b,{admin:true})).join("")||`<p class="muted">No bookings yet.</p>`}</div></div>`;
+};
+AFTER.customer=(id)=>{const f=$("#fCust");if(!f)return;f.onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(f)),m=$("#cMsg");
+  try{v.reg=String(v.reg).toUpperCase();const u=await api.updateProfile(id,v);S.profiles=S.profiles.map(x=>x.id===id?u:x);m.className="okmsg";m.textContent="Saved."}catch(x){m.className="err";m.textContent=x.message}}};
+
+VIEWS.services=()=>`<div class="stack"><h1>Services and prices</h1><p class="muted">Changes show in the app straight away. Turning a service off hides it from customers; existing bookings keep their price.</p>
+  ${S.services.map(s=>serviceForm(s)).join("")}
+  <details class="card"><summary>Add a service</summary>${serviceForm({id:"",name:"",kind:"once",price:0,price_max:null,custom:false,description:"",active:true,sort:(S.services.length+1)})}</details>
+  <div class="card"><h2>Vehicle size extras</h2><p class="small muted">Change these in Settings.</p>${sizeTable()}</div></div>`;
+function serviceForm(s){return `<form class="card" data-svcform="${s.id}" novalidate><div class="grid">
+  <label>Name<input name="name" value="${esc(s.name)}"></label>
+  <label>Type<select name="kind"><option value="once" ${s.kind==="once"?"selected":""}>Once-off wash</option><option value="monthly" ${s.kind==="monthly"?"selected":""}>Monthly package (4 washes)</option></select></label>
+  <label>Price (R)${s.kind==="monthly"?" for the month":""}<input name="price" type="number" min="0" step="0.01" value="${s.price}"></label>
+  <label>Price agreed with customer?<select name="custom"><option value="false" ${!s.custom?"selected":""}>No, fixed price</option><option value="true" ${s.custom?"selected":""}>Yes, a range (set "up to")</option></select></label>
+  <label>Up to (R, only for a range)<input name="price_max" type="number" min="0" step="0.01" value="${s.price_max??""}"></label>
+  <label>Order on the list<input name="sort" type="number" step="1" value="${s.sort}"></label>
+  <label style="grid-column:1/-1">What's included<input name="description" value="${esc(s.description)}"></label>
+  <label>Shown to customers<select name="active"><option value="true" ${s.active?"selected":""}>Yes</option><option value="false" ${!s.active?"selected":""}>No, hidden</option></select></label>
+  </div><div class="row"><button class="btn sm" type="submit">${s.id?"Save":"Add service"}</button><span class="small" data-msg></span></div></form>`}
+AFTER.services=()=>{document.querySelectorAll("[data-svcform]").forEach(f=>f.onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(f)),m=f.querySelector("[data-msg]");
+  const s={name:v.name.trim(),kind:v.kind,price:+v.price,custom:v.custom==="true",price_max:v.price_max===""?null:+v.price_max,description:v.description.trim(),active:v.active==="true",sort:+v.sort||0};
+  if(!s.name){m.className="small err";m.textContent="Add a name.";return}if(s.custom&&!(s.price_max>=s.price)){m.className="small err";m.textContent="For a range, set 'Up to' to at least the price.";return}
+  if(f.dataset.svcform)s.id=+f.dataset.svcform;
+  try{await api.saveService(s);S.services=await api.services();toast("Saved");render()}catch(x){m.className="small err";m.textContent=x.message}})};
+
+const DAYN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+VIEWS.settings=()=>{const st=setts();return `<div class="stack"><h1>Settings</h1>
+  <form class="card" id="fSet" novalidate>
+    <h2>When customers can book</h2>
+    <label>Booking times (one van, so one booking per time)<input name="slots" value="${esc(st.slots.join(", "))}" placeholder="08:00, 10:00, 12:00"></label>
+    <div><span class="small muted" style="font-weight:600">Days you wash</span><div class="chips" style="margin-top:6px">${DAYN.map((d,i)=>`<label class="chip" style="flex-direction:row;gap:6px;color:var(--ink)"><input type="checkbox" name="day" value="${i}" ${st.open_days.includes(i)?"checked":""} style="width:auto">${d}</label>`).join("")}</div></div>
+    <label>How many days ahead customers can book<input name="days_ahead" type="number" min="1" max="60" value="${st.days_ahead}"></label>
+    <h2>Loyalty and vehicle sizes</h2>
+    <label>Every how many once-off washes is one free? (0 = no loyalty card)<input name="loyalty_every" type="number" min="0" max="20" value="${st.loyalty_every}"></label>
+    <div class="grid"><label>Extra for a 7-seater / SUV (R per wash)<input name="suv" type="number" min="0" step="1" value="${(st.size_extra||{}).suv||0}"></label>
+    <label>Extra for a minibus / taxi (R per wash)<input name="minibus" type="number" min="0" step="1" value="${(st.size_extra||{}).minibus||0}"></label></div>
+    <p id="setMsg" role="status"></p><button class="btn" type="submit">Save settings</button></form>
+  <div class="card"><h2>Your admin account</h2><p class="small">${esc(S.me.name)} · ${esc(S.me.email)}</p><div class="row"><a class="btn ghost sm" href="#/account">Change my password</a><button class="btn ghost sm" data-act="logout">Log out</button></div></div></div>`};
+AFTER.settings=()=>{$("#fSet").onsubmit=async e=>{e.preventDefault();const f=e.target,m=$("#setMsg"),fd=new FormData(f);
+  const slots=String(fd.get("slots")).split(/[,\s]+/).map(s=>s.trim()).filter(Boolean).map(s=>/^\d:\d\d$/.test(s)?"0"+s:s);
+  if(!slots.length||slots.some(s=>!/^([01]\d|2[0-3]):[0-5]\d$/.test(s))){m.className="err";m.textContent="Write times like 08:00, 10:00, 12:00.";return}
+  const days=fd.getAll("day").map(Number);if(!days.length){m.className="err";m.textContent="Pick at least one day.";return}
+  try{S.settings=await api.saveSettings({slots:[...new Set(slots)].sort(),open_days:days.sort(),days_ahead:+fd.get("days_ahead")||14,loyalty_every:+fd.get("loyalty_every")||0,size_extra:{sedan:0,suv:+fd.get("suv")||0,minibus:+fd.get("minibus")||0}});m.className="okmsg";m.textContent="Saved. Customers see the new times straight away."}catch(x){m.className="err";m.textContent=x.message}}};
+
+/* ================= Fuel Friend section =================
+   Reads the data block from the Fuel Friend page on the same site, so both always show the same figures. */
+async function loadFuel(){
+  if(S.fuel||S.fuelErr)return;
+  try{const r=await fetch(CFG.fuelData||"/Fuel_Friend/index.html",{cache:"no-cache"});if(!r.ok)throw new Error(r.status);const h=await r.text();
+    const a=h.indexOf("const DATA=");if(a<0)throw new Error("no data");const b=h.indexOf("\n};\n",a);
+    S.fuel=Function('"use strict";return ('+h.slice(h.indexOf("{",a),b+2)+")")();
+  }catch(e){S.fuelErr="Fuel Friend's prices couldn't be loaded right now."}
+}
+const daysUntil=iso=>Math.round((new Date(iso+"T00:00:00Z")-new Date(todayISO()+"T00:00:00Z"))/864e5);
+const dmyToIso=s=>{const [d,m,y]=String(s).split("-");return `${y}-${m}-${d}`};
+const midOf=ps=>{const a=ps.slice().sort((x,y)=>x-y);return a.length?(a.length%2?a[(a.length-1)/2]:(a[a.length/2-1]+a[a.length/2])/2):0};
+const BRANDS=["Astron Energy","Ener-Gi","Elegant","Co-Op Total","Total Energies","TotalEnergies","Total","BP","Caltex","Engen","Independent","MBT","Puma","Q4","Quest","Sasol","Shell","Viva"];
+const PLACE=/^(gqeberha|port elizabeth|ethekwini|durban|tshwane|pretoria|mangaung|bloemfontein|cape town|mbombela|nelspruit|johannesburg|east london|pietermaritzburg|george|rustenburg|sandton|randburg|cnr|1)$/i;
+function cleanName(n){n=n.replace(/\s+/g," ").trim().replace(/^Truck Stop (?=\S)/,"").replace(/^Total Energies (?=Total )/,"");const w=n.split(" ");for(const k of [2,1]){if(w.length>2*k-1&&w.slice(0,k).join(" ").toLowerCase()===w.slice(k,2*k).join(" ").toLowerCase())return w.slice(k).join(" ")}return n}
+function cleanWhere(w){const p=String(w||"").replace(/^\d+(?=[A-Za-z])/,"").split("/").map(x=>x.trim()).filter(x=>x&&!PLACE.test(x));return p.length?p[p.length-1]:""}
+function fuelCities(){
+  const D=S.fuel;return Object.entries(D.stations||{}).map(([id,c])=>{
+    const zone=(D.zones||{})[id]||"inland",ws=D.official[zone].d50w;
+    const all=(c.rows||[]).filter(r=>typeof r[2]==="number").map(r=>({name:cleanName(String(r[0])),where:cleanWhere(r[1]),price:r[2],upd:dmyToIso(r[3])}));
+    const m=midOf(all.map(s=>s.price)),ok=all.filter(s=>s.price>=20&&s.price<=50&&s.price>=m-4.5&&s.price<=m+4&&s.price>=ws-2);
+    const fresh=ok.filter(s=>s.upd>=D.official.effective),L=(fresh.length>=8?fresh:ok).sort((a,b)=>a.price-b.price);
+    return {id,name:c.name,zone,S:L,median:midOf(L.map(s=>s.price)),cheapest:L[0]};
+  });
+}
+function moveText(){const f=S.fuel.forecast,d=daysUntil(f.effective),when=fmtD(f.effective,{weekday:"long",day:"numeric",month:"long"});
+  const ch=v=>typeof v!=="number"?"":`<b class="${v>0?"up":"down"}">${v>0?"up":"down"} about R${Math.abs(v).toFixed(2)}</b>`;
+  if(d<=0)return `Prices changed on ${when}. New figures follow shortly.`;
+  return typeof f.d50==="number"?`<b>${when}</b> (in ${d} day${d===1?"":"s"}): diesel ${ch(f.d50)}, petrol 95 ${ch(f.p95)} a litre. Estimate, not yet official.`:`<b>${when}</b> (in ${d} day${d===1?"":"s"}): no reliable estimate yet.`}
+const fuelTeaser=()=>`<a class="card" href="#/fuel" style="text-decoration:none;color:inherit;border-color:var(--teal)" id="fuelTeaser"><div class="between"><span class="eyebrow">Fuel Friend</span><span class="small">Open →</span></div><h2>Save on fuel too</h2><p class="muted small">When to fill up, and the cheapest diesel near you.</p></a>`;
+async function fuelTeaserFill(){const el=$("#fuelTeaser");if(!el)return;await loadFuel();if(!S.fuel||!$("#fuelTeaser"))return;
+  const c=fuelCities().find(x=>x.id==="gqb");
+  $("#fuelTeaser").innerHTML=`<div class="between"><span class="eyebrow">Fuel Friend</span><span class="small">More →</span></div><p>${moveText()}</p>${c&&c.cheapest?`<p class="small">Cheapest diesel in Gqeberha: <b>R${c.cheapest.price.toFixed(2)}</b> at ${esc(c.cheapest.name)}.</p>`:""}`}
+VIEWS.fuel=()=>`<div class="stack" id="fuelBox"><div><span class="eyebrow">Fuel Friend by Washly's</span><h1>Spend less on fuel</h1></div><p class="muted">Loading today's prices…</p></div>`;
+AFTER.fuel=async()=>{await loadFuel();const box=$("#fuelBox");if(!box)return;
+  if(!S.fuel){box.innerHTML=`<h1>Fuel Friend</h1><div class="card"><p>${esc(S.fuelErr)}</p><a class="btn" href="${esc(CFG.fuelPage||"/Fuel_Friend/")}">Open Fuel Friend</a></div>`;return}
+  const D=S.fuel,C=fuelCities();if(!C.some(c=>c.id===S.fuelCity))S.fuelCity="gqb";const c=C.find(x=>x.id===S.fuelCity),off=D.official[c.zone];
+  const top=c.S.slice(0,10),min=c.cheapest?c.cheapest.price:0;
+  box.innerHTML=`<div class="between"><div><span class="eyebrow">Fuel Friend by Washly's</span><h1>Spend less on fuel</h1></div>
+      <label style="min-width:220px">Your city<select id="fCity">${C.map(x=>`<option value="${x.id}" ${x.id===c.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></label></div>
+    <div class="gauges">
+      ${c.S.length?`<div class="gauge hero2"><span class="g">Diesel 50ppm · ${esc(c.name.replace(/ \(.*\)/,""))} middle</span><span class="p">R${c.median.toFixed(2)}<small>/L</small></span><span class="d">${c.S.length} stations</span></div>
+      <div class="gauge"><span class="g">Cheapest diesel</span><span class="p">R${min.toFixed(2)}<small>/L</small></span><span class="d">${esc(c.cheapest.name)}</span></div>`:""}
+      <div class="gauge"><span class="g">Petrol 95 · ${c.zone}</span><span class="p">R${off.p95.toFixed(2)}<small>/L</small></span><span class="d">Same at every station</span></div>
+      <div class="gauge"><span class="g">Petrol 93 · ${c.zone}</span><span class="p">R${off.p93.toFixed(2)}<small>/L</small></span><span class="d">Same at every station</span></div>
+    </div>
+    <div class="card"><h2>When to fill up</h2><p>${moveText()}</p>${D.forecast.note?`<p class="small muted">${esc(D.forecast.note)}</p>`:""}
+      ${daysUntil(D.forecast.effective)>0&&typeof D.forecast.d50==="number"?`<p class="small"><b>Diesel:</b> ${D.forecast.d50>0?"fill up before":"wait until"} ${fmtD(D.forecast.effective,{day:"numeric",month:"short"})} if you can. <b>Petrol:</b> ${D.forecast.p95>0?"fill up before":"wait until"} ${fmtD(D.forecast.effective,{day:"numeric",month:"short"})} if you can.</p>`:""}</div>
+    ${top.length?`<div class="card"><div class="between"><h2>Cheapest diesel in ${esc(c.name.replace(/ \(.*\)/,""))}</h2><span class="small muted">Checked ${fmtD(D.stationsChecked,{day:"numeric",month:"short"})}</span></div>
+      <div class="tbl"><table><thead><tr><th>Station</th><th class="n">Diesel</th><th class="n">vs cheapest</th></tr></thead><tbody>${top.map(s=>`<tr class="${s.price===min?"best":""}"><td><b>${esc(s.name)}</b>${s.where?`<br><span class="tiny muted">${esc(s.where)}</span>`:""}</td><td class="n">R${s.price.toFixed(2)}</td><td class="n">${s.price===min?"Cheapest":"+R"+(s.price-min).toFixed(2)}</td></tr>`).join("")}</tbody></table></div>
+      <p class="tiny muted">Prices reported by drivers and stations on myTank. Check the pump before a full tank.</p></div>`:""}
+    <div class="card"><h2>Fuel news</h2>${(D.news||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4).map(n=>`<div class="news-i"><span class="tiny muted">${fmtD(n.date,{day:"numeric",month:"short"})} · <a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.src)}</a></span><b>${esc(n.title)}</b>${n.you?`<span class="small">What it means: ${esc(n.you)}</span>`:""}</div>`).join("")}</div>
+    <div class="row"><a class="btn ghost" href="${esc(CFG.fuelPage||"/Fuel_Friend/")}">Open the full Fuel Friend (map, rewards cards, all stations)</a></div>
+    <p class="tiny muted">Official prices from ${fmtD(D.official.effective,{day:"numeric",month:"long"})}: <a href="${esc(D.official.src.url)}" target="_blank" rel="noopener">${esc(D.official.src.name)}</a>.</p>`;
+  $("#fCity").onchange=e=>{S.fuelCity=e.target.value;try{localStorage.setItem("washlys-fuel-city",S.fuelCity)}catch(x){}AFTER.fuel()}};
+
+/* Shown until the database is connected (same as the price list in the database setup). */
+const PRICE_LIST=[["Wash & Dry","once",75,null,"Outside wash and tyre polish"],["Full Wash","once",120,null,"Outside wash, tyre polish, vacuum, dash shine and air freshener"],["Inside Wash","once",60,null,"Vacuum, dash shine and air freshener"],["Vacuuming","once",40,null,"Vacuum only"],
+  ["Basic Wash Monthly Package","monthly",270,null,"4 washes a month, same day and time each week"],["Wash X Inside Package","monthly",250,null,"4 washes a month, same day and time each week"],["Full Wash Package","monthly",420,null,"4 washes a month, same day and time each week"],["Custom Package","monthly",150,420,"4 washes a month, made up the way you want. We confirm the price with you (R150 to R420)."]]
+  .map(([name,kind,price,price_max,description],i)=>({id:i+1,name,kind,price,price_max,custom:price_max!=null,description,active:true,sort:i+1}));
+/* ================= start ================= */
+(async function start(){
+  try{
+    if(api){
+      api.onAuth(async(ev,s)=>{if(ev==="PASSWORD_RECOVERY"){S.recovery=true;S.session=s;render();return}
+        if(ev==="SIGNED_OUT"){S.session=null;S.me=null;S.bookings=[];S.profiles=[];render()}
+        if(ev==="SIGNED_IN"&&s&&!S.me&&!S.loading){S.session=s;try{await loadMe()}catch(e){}render()}});
+      await loadPublic();S.session=await api.session();if(S.session)await loadMe();await loadTaken();
+    }
+  }catch(e){console.error(e);toast("Couldn't reach the booking system. Check your connection and refresh.")}
+  if(!S.services.length)S.services=PRICE_LIST;
+  S.loading=false;render();
+})();
+/* Offline banner */
+window.addEventListener("online",async()=>{setOffline(false);if(api){try{await loadPublic();if(S.session)await loadMe();await loadTaken();render()}catch(e){}}});
+window.addEventListener("offline",()=>setOffline(true));if(!navigator.onLine)setOffline(true);
+/* Coming back to the app (switching apps on the phone): fetch the latest bookings and free times. */
+let lastSync=Date.now();
+document.addEventListener("visibilitychange",async()=>{
+  if(document.visibilityState!=="visible"||!api||!navigator.onLine||Date.now()-lastSync<30000)return;lastSync=Date.now();
+  if(document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
+  try{await loadPublic();if(S.session)await loadMe();await loadTaken();const y=window.scrollY;render();window.scrollTo(0,y)}catch(e){}});
+/* Offline support and home-screen install */
+if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost")&&!window.__MOCK_API_NO_SW){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+<footer class="foot wrap">Washly's · Mobile car wash · <span id="footc"></span></footer>
+<script>document.getElementById("footc").textContent=[ (window.WASHLYS_CONFIG||{}).contact?.phone, (window.WASHLYS_CONFIG||{}).contact?.email ].filter(Boolean).join(" · ")</script>
+</body>
+</html>
