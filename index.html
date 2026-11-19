@@ -142,6 +142,114 @@ tr.best td{background:var(--teal-l)}
 details.card summary{cursor:pointer;font-weight:700}
 .foot{color:var(--muted);font-size:13px;text-align:center;padding:12px 0 24px}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+/* ===== motion ===== */
+@keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes slideF{from{opacity:0;transform:translateX(32px)}to{opacity:1;transform:none}}
+@keyframes slideB{from{opacity:0;transform:translateX(-32px)}to{opacity:1;transform:none}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:none;opacity:1}}
+@keyframes shimmer{to{background-position:-200% 0}}
+#view.enter{animation:viewIn .24s ease-out}
+.step.f{animation:slideF .28s cubic-bezier(.2,.8,.2,1)}
+.step.b{animation:slideB .28s cubic-bezier(.2,.8,.2,1)}
+.btn,.opt,.day,.time,.chip,.seg button,.iconbtn,.nav a{transition:transform .12s ease,background-color .15s,border-color .15s,box-shadow .15s,color .15s}
+.btn:active:not(:disabled),.opt:active,.day:active:not(:disabled),.time:active:not(:disabled),.chip:active:not(:disabled),.iconbtn:active,.nav a:active{transform:scale(.96)}
+.skel{background:linear-gradient(90deg,#E4EDEF 25%,#F2F7F8 50%,#E4EDEF 75%);background-size:200% 100%;animation:shimmer 1.2s infinite linear;border-radius:18px}
+/* ===== booking flow: one question per screen ===== */
+body.flow .top,body.flow .nav{display:none}
+body.flow{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
+body.flow main{padding-top:0}
+body.flow .toast{bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+.flowhead{position:sticky;top:0;z-index:25;display:flex;align-items:center;gap:12px;margin:0 -16px;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;background:rgba(243,248,249,.9);backdrop-filter:saturate(1.6) blur(14px);-webkit-backdrop-filter:saturate(1.6) blur(14px)}
+@media (min-width:760px){.flowhead{margin:0}}
+.iconbtn{width:42px;height:42px;border-radius:50%;border:0;background:#fff;color:var(--ink);display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 3px rgba(15,59,80,.14);flex:none}
+.iconbtn svg{width:20px;height:20px}
+.iconbtn.hide{visibility:hidden}
+.fh-mid{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.fh-mid span{font-size:12.5px;font-weight:700;color:var(--muted);letter-spacing:.02em}
+.prog{width:100%;max-width:220px;height:5px;border-radius:5px;background:#DCE8EB;overflow:hidden}
+.prog i{display:block;height:100%;border-radius:5px;background:var(--teal);transition:width .35s ease}
+.flow-wrap{max-width:560px;margin:0 auto;padding-top:6px}
+.step{display:flex;flex-direction:column;gap:18px}
+.step h1{font-size:29px}
+.step .lead{color:var(--muted);margin-top:-8px}
+.seg{display:flex;gap:4px;padding:4px;border-radius:13px;background:#E2ECEE}
+.seg button{flex:1;border:0;background:transparent;border-radius:10px;padding:9px 6px;min-height:42px;font-weight:700;font-size:14.5px;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(15,59,80,.16)}
+.seg.sizes button{font-size:13.5px;line-height:1.2}
+.seg.sizes small{display:block;font-weight:600;font-size:11.5px;opacity:.75}
+.fl{display:flex;flex-direction:column;gap:8px}
+.fl>.lbl{font-size:14px;font-weight:700;color:var(--muted)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:14px;padding:16px;border-radius:18px;background:#fff;cursor:pointer;box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(15,59,80,.05)}
+.opt:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.opt[aria-pressed="true"]{background:#F5FBFC;box-shadow:0 0 0 2px var(--teal),0 4px 14px rgba(58,147,160,.14)}
+.radio{width:22px;height:22px;border-radius:50%;border:2px solid #B4CAD0;flex:none}
+.opt[aria-pressed="true"] .radio{border-color:var(--teal);background:var(--teal);box-shadow:inset 0 0 0 4px #fff}
+.o-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.o-main b{font-family:var(--f-head);font-weight:600;font-size:16px}
+.o-main span{font-size:14px;color:var(--muted)}
+.o-pr{font-weight:700;color:var(--teal-d);white-space:nowrap}
+.hint{display:flex;gap:10px;align-items:flex-start;background:#FDF4E0;border-radius:14px;padding:12px 14px;font-size:14.5px}
+.hint svg{width:20px;height:20px;flex:none;color:#9A6A00;margin-top:1px}
+.days{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;scroll-padding:0 16px;margin:0 -16px;padding:4px 16px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.days::-webkit-scrollbar{display:none}
+.day{flex:none;scroll-snap-align:start;width:66px;border:0;border-radius:18px;background:#fff;padding:10px 0;display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.day b{font-family:var(--f-head);font-size:21px;line-height:1.2}
+.day small{font-size:12px;font-weight:700;color:var(--muted)}
+.day[aria-pressed="true"]{background:var(--navy);color:#fff;box-shadow:0 6px 16px rgba(15,59,80,.25)}
+.day[aria-pressed="true"] small{color:rgba(255,255,255,.75)}
+.day:disabled{opacity:.42;cursor:not-allowed}
+.times{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.time{border:0;border-radius:14px;background:#fff;padding:13px 0;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;font-size:16px;cursor:pointer;color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.time small{font-size:11.5px;font-weight:600}
+.time[aria-pressed="true"]{background:var(--teal);color:#fff;box-shadow:0 6px 16px rgba(58,147,160,.3)}
+.time:disabled{background:transparent;color:#A3B6BB;cursor:not-allowed;box-shadow:0 0 0 1px #E2EBED}
+.time:disabled b{text-decoration:line-through;font-weight:600}
+.sub{font-family:var(--f-head);font-weight:600;font-size:16px}
+.weeks{display:flex;flex-wrap:wrap;gap:6px}
+.weeks span{background:var(--teal-l);color:var(--teal-d);border-radius:999px;padding:5px 11px;font-size:13.5px;font-weight:700}
+.flow-wrap input,.flow-wrap textarea{border-radius:14px;padding:14px;border-color:#CFE0E4}
+.flow-wrap label{gap:7px}
+.flowbar{position:fixed;left:0;right:0;bottom:0;z-index:26;background:rgba(255,255,255,.92);backdrop-filter:saturate(1.6) blur(16px);-webkit-backdrop-filter:saturate(1.6) blur(16px);border-top:1px solid rgba(15,59,80,.08);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px))}
+.fb-in{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.fb-sum{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.fb-sum b{font-family:var(--f-head);font-size:18px}
+.fb-sum span{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.flowbar .btn{min-height:52px;min-width:150px;border-radius:15px;font-size:16px;padding:12px 22px}
+.sumcard{background:#fff;border-radius:20px;box-shadow:0 0 0 1px var(--line)}
+.srow{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-bottom:1px solid #EBF2F4}
+.srow:last-child{border-bottom:0}
+.si{width:38px;height:38px;border-radius:12px;background:var(--teal-l);color:var(--teal-d);display:grid;place-items:center;flex:none}
+.si svg{width:19px;height:19px}
+.sx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.sx b{font-weight:700}
+.sx span{font-size:14px;color:var(--muted)}
+.chg{background:none;border:0;padding:6px 2px;font-weight:700;font-size:14px;color:var(--teal-d);cursor:pointer;text-decoration:none}
+.lines{display:flex;flex-direction:column;gap:9px;padding:16px}
+.line{display:flex;justify-content:space-between;gap:12px;font-size:15px}
+.line span:last-child{white-space:nowrap}
+.line.total{border-top:1px solid var(--line);padding-top:12px;font-family:var(--f-head);font-weight:700;font-size:18px}
+.errbox{background:#FBECE8;color:#9C3520;border-radius:14px;padding:12px 14px;font-weight:600}
+.errbox .linkbtn{color:#9C3520;margin-left:4px}
+details.more{background:#fff;border-radius:16px;box-shadow:0 0 0 1px var(--line);padding:14px 16px}
+details.more summary{cursor:pointer;font-weight:700}
+details.more[open] summary{margin-bottom:10px}
+/* ===== success screen ===== */
+.done-screen{max-width:520px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding-top:28px}
+.tick{animation:pop .5s cubic-bezier(.2,1.5,.4,1) both}
+.tick svg{width:92px;height:92px;display:block}
+.tick circle{fill:#E3F3EB;stroke:var(--ok);stroke-width:3;stroke-dasharray:152;stroke-dashoffset:152;animation:draw .6s .1s ease-out forwards}
+.tick path{fill:none;stroke:var(--ok);stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40;animation:draw .35s .55s ease-out forwards}
+.done-screen .sumcard{width:100%;text-align:left}
+.done-screen .acts{width:100%;display:flex;flex-direction:column;gap:10px}
+.done-screen .acts .btn{width:100%;min-height:52px;border-radius:15px}
+@media (prefers-reduced-motion:reduce){
+  #view.enter,.step.f,.step.b,.tick,.skel{animation:none!important}
+  .tick circle,.tick path{animation:none!important;stroke-dashoffset:0}
+  .btn:active,.opt:active,.day:active,.time:active,.chip:active,.iconbtn:active,.nav a:active{transform:none!important}
+  .prog i{transition:none}
+}
 </style>
 </head>
 <body>
@@ -277,12 +385,12 @@ const ico=n=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 function navItems(){
   if(isAdmin())return [["today","Bookings","list"],["customers","Customers","people"],["book","Book","book"],["services","Services","tag"],["fuel","Fuel Friend","fuel"],["settings","Settings","cog"]];
   if(S.me)return [["home","Home","home"],["book","Book","book"],["washes","My washes","list"],["fuel","Fuel Friend","fuel"],["account","Account","user"]];
-  return [["home","Home","home"],["prices","Prices","tag"],["fuel","Fuel Friend","fuel"],["login","Log in","user"]];
+  return [["home","Home","home"],["book","Book","book"],["prices","Prices","tag"],["fuel","Fuel Friend","fuel"],["login","Log in","user"]];
 }
 function route(){
   const h=(location.hash||"#/").replace(/^#\/?/,"");const parts=h.split("/"),v=parts[0],arg=parts.slice(1).join("/");
   let view=v||(isAdmin()?"today":"home");
-  const allowed=new Set(navItems().map(x=>x[0]).concat(["signup","login","reset","newpass","prices","home"],S.me?["paid"]:[],isAdmin()?["customer"]:[]));
+  const allowed=new Set(navItems().map(x=>x[0]).concat(["signup","login","reset","newpass","prices","home","book"],S.me?["paid","booked"]:[],isAdmin()?["customer"]:[]));
   if(!allowed.has(view))view=S.me?(isAdmin()?"today":"home"):(["book","washes","account"].includes(view)?"login":"home");
   if(isAdmin()&&view==="home")view="today";
   if(S.recovery)view="newpass";
@@ -290,19 +398,27 @@ function route(){
 }
 function go(path){if(location.hash!=="#/"+path)location.hash="#/"+path;else render()}
 window.addEventListener("hashchange",async()=>{
-  /* Opening Book always fetches the latest prices, opening days and free times. */
-  if(api&&route().view==="book"&&!S.loading){try{await Promise.all([loadPublic(),loadTaken()])}catch(e){}}
-  render();window.scrollTo(0,0)});
+  const r=route(),inFlow=r.view==="book"&&!isAdmin();
+  /* Steps of the booking flow slide forwards or backwards. */
+  if(inFlow&&S.lastView==="book"&&S.lastStep){const L=flowSteps(),a=L.indexOf(S.lastStep),z=L.indexOf(r.arg||"svc");S.flowDir=z<a?"b":"f"}else S.flowDir="";
+  /* Opening Book (and its "when" step) fetches the latest prices, opening days and free times. */
+  const fresh=api&&r.view==="book"&&!S.loading&&(S.lastView!=="book"||r.arg==="when"||isAdmin());
+  if(fresh&&!inFlow){try{await Promise.all([loadPublic(),loadTaken()])}catch(e){}}
+  render();window.scrollTo(0,0);
+  if(fresh&&inFlow){try{await Promise.all([loadPublic(),loadTaken()]);const n=route();if(n.view==="book"&&n.arg===r.arg&&!document.activeElement.matches("input,textarea")){const y=scrollY;S.flowDir="";S.quiet=true;render();S.quiet=false;scrollTo(0,y)}}catch(e){}}
+});
 
 function renderChrome(view){
+  document.body.classList.toggle("flow",view==="book"&&!isAdmin()&&!!api);
   $("#nav").innerHTML=navItems().map(([k,l,i])=>`<a href="#/${k}" ${k===view||(k==="customers"&&view==="customer")?'aria-current="page"':""}>${ico(i)}<span>${l}</span></a>`).join("");
   $("#topr").innerHTML=S.me?`<span class="small" style="opacity:.8">${esc(S.me.name.split(" ")[0]||"")}${isAdmin()?" · admin":""}</span>${isAdmin()?`<button class="pill-btn" data-act="logout">Log out</button>`:""}`
     :`<a class="pill-btn" href="#/login">Log in</a><a class="pill-btn solid" href="#/signup">Sign up free</a>`;
 }
 async function render(){
   const {view,arg}=route();renderChrome(view);const V=$("#view");
-  if(S.loading){V.innerHTML=`<p class="muted" style="padding:40px 0;text-align:center">Loading…</p>`;return}
+  if(S.loading){V.innerHTML=`<div class="stack" aria-busy="true" aria-label="Loading"><div class="skel" style="height:190px"></div><div class="skel" style="height:96px"></div><div class="skel" style="height:96px"></div><div class="skel" style="height:96px"></div></div>`;return}
   const f=VIEWS[view]||VIEWS.home;V.innerHTML=f(arg)||"";
+  if(S.lastView!==view&&!S.quiet){V.classList.remove("enter");void V.offsetWidth;V.classList.add("enter")}S.lastView=view;
   const after=AFTER[view];if(after)after(arg);
 }
 
@@ -399,11 +515,11 @@ VIEWS.home=()=>{
       <h1>We come to you.</h1>
       <p>Book a wash at your home or office in a few taps. Exterior washes, tyre polish, vacuuming and interior shine.</p>
       <ul class="ticks"><li>Exterior wash</li><li>Tyre polish</li><li>Vacuuming</li><li>Interior shine</li></ul>
-      <div class="row"><a class="btn" href="#/signup">Create a free account</a><a class="btn ghost" href="#/login">Log in</a></div>
-      <p class="small" style="opacity:.9">Free account. Not a subscription: you only pay for the washes you book.</p>
+      <div class="row"><a class="btn" href="#/book">Book a wash</a><a class="btn ghost" href="#/login">Log in</a></div>
+      <p class="small" style="opacity:.9">You create a free account as you book. It's not a subscription: you only pay for the washes you book.</p>
     </section>
     ${installCard()}
-    ${FROM_FF||PROMO_IN?`<div class="card" style="border-color:var(--sun)"><b>Welcome from Fuel Friend.</b><p>${PROMO_IN?`Your code <b>${esc(PROMO_IN)}</b> gives you 10% off your first once-off wash. It's filled in for you when you book.`:"Create a free account to book your first wash."}</p></div>`:""}
+    ${FROM_FF||PROMO_IN?`<div class="card" style="border-color:var(--sun)"><b>Welcome from Fuel Friend.</b><p>${PROMO_IN?`Your code <b>${esc(PROMO_IN)}</b> gives you 10% off your first once-off wash. It's filled in for you when you book.`:"Book your first wash: you create a free account as you go."}</p></div>`:""}
     ${api?"":notConnected()}
     <div class="card"><div class="between"><h2>Prices</h2><a href="#/prices" class="small">Full price list</a></div>${serviceList(false)}</div>
     ${fuelTeaser()}
@@ -426,7 +542,7 @@ AFTER.home=()=>{S.done=null;fuelTeaserFill()};
 
 VIEWS.prices=()=>`<div class="stack"><h1>Price list</h1><div class="card">${serviceList(false)}</div>
   <div class="card"><h2>Vehicle size, per wash</h2>${sizeTable()}</div><div class="card"><h2>Good to know</h2>${RULES}</div>
-  ${api?`<div class="row"><a class="btn" href="#/${S.me?"book":"signup"}">${S.me?"Book a wash":"Create a free account to book"}</a></div>`:notConnected()}</div>`;
+  ${api?`<div class="row"><a class="btn" href="#/book">Book a wash</a></div>`:notConnected()}</div>`;
 
 /* ---------- install on the home screen ---------- */
 const UA=navigator.userAgent;
@@ -490,7 +606,7 @@ AFTER.signup=()=>{const f=$("#fSignup");if(!f)return;f.onsubmit=async e=>{e.prev
   try{const meta={name:v.name.trim(),cell:v.cell.trim(),address:v.address.trim(),suburb:v.suburb.trim(),car:v.car.trim(),reg:String(v.reg||"").trim().toUpperCase(),car_size:v.car_size,source:FROM_FF?"Fuel Friend":"App"};
     const r=await api.signUp(v.email.trim(),v.password,meta);
     if(!r.session){$("#view").innerHTML=`<div class="center card"><h1>Check your email</h1><p>We've sent a link to <b>${esc(v.email)}</b>. Tap it to confirm your account, then log in here.</p><a class="btn" href="#/login">Log in</a></div>`;return}
-    S.session=r.session;await loadMe();S.done="Welcome! Your free account is ready.";go(promoSaved()?"book":"home");
+    S.session=r.session;await loadMe();S.done="Welcome! Your free account is ready.";go(loadDraft()&&loadDraft().svc?"book/review":promoSaved()?"book":"home");
   }catch(x){fail(/registered|exists/i.test(x.message)?"There's already an account with that email. Try logging in.":x.message);btn.disabled=false;btn.textContent="Create my free account"}};};
 
 VIEWS.login=()=>!api?notConnected():`<div class="center stack"><h1>Log in</h1>
@@ -502,7 +618,7 @@ VIEWS.login=()=>!api?notConnected():`<div class="center stack"><h1>Log in</h1>
     <p class="small"><a href="#/reset">Forgot your password?</a> · New here? <a href="#/signup">Create a free account</a></p>
   </form></div>`;
 AFTER.login=()=>{const f=$("#fLogin");if(!f)return;f.onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(f)),er=$("#liErr"),btn=f.querySelector("button");
-  btn.disabled=true;try{const r=await api.signIn(String(v.email).trim(),v.password);S.session=r.session||await api.session();await loadMe();go(isAdmin()?"today":(promoSaved()?"book":"home"))}
+  btn.disabled=true;try{const r=await api.signIn(String(v.email).trim(),v.password);S.session=r.session||await api.session();await loadMe();go(isAdmin()?"today":(loadDraft()&&loadDraft().svc?"book/review":promoSaved()?"book":"home"))}
   catch(x){er.textContent=/invalid/i.test(x.message)?"That email and password don't match. Try again or reset your password.":/confirm/i.test(x.message)?"Please confirm your email first: tap the link we sent you.":x.message;er.hidden=false;btn.disabled=false}}};
 
 VIEWS.reset=()=>!api?notConnected():`<div class="center stack"><h1>Reset your password</h1><form class="card" id="fReset" novalidate>
@@ -554,7 +670,7 @@ function estimate(b,svc,cust){
   if(b.promo&&!list.length)return withCredit({total:base,text:`${R(base)}${ex?` (includes +R${ex} for ${SIZES[cust.car_size].toLowerCase()})`:""}. Code ${esc(b.promo)}: any discount is applied when you confirm.`});
   return withCredit({total:base,text:`${R(base)}${ex?` (includes +R${ex} for ${SIZES[cust.car_size].toLowerCase()})`:""}`});
 }
-VIEWS.book=(arg)=>{
+const legacyBook=(arg)=>{
   if(!api)return notConnected();
   if(!S.me)return `<div class="center card"><h2>Log in to book</h2>${freeNote()}<div class="row"><a class="btn" href="#/signup">Create a free account</a><a class="btn ghost" href="#/login">Log in</a></div></div>`;
   const adminMode=isAdmin();
@@ -585,7 +701,7 @@ VIEWS.book=(arg)=>{
     <div class="card"><h3>Good to know</h3>${RULES}</div>
   </form>`;
 };
-AFTER.book=(arg)=>{
+const legacyBookAfter=(arg)=>{
   const find=$("#bkFind");
   if(find){const draw=()=>{const q=find.value.trim().toLowerCase();const L=S.profiles.filter(p=>!p.is_admin&&[p.name,p.cell,p.account_no,p.reg,p.email].join(" ").toLowerCase().includes(q)).slice(0,12);
       $("#bkFindList").innerHTML=L.map(p=>`<a class="bk" href="#/book/${esc(p.id)}"><b>${esc(p.name)}</b><span class="small muted">${esc(p.account_no)} · ${esc(p.cell)} · ${esc(p.car)}</span></a>`).join("")||`<p class="muted">No customers found.</p>`};
@@ -612,6 +728,251 @@ AFTER.book=(arg)=>{
       if(isAdmin()){toast(S.done);S.done=null;go("customer/"+who)}else go("home");
     }catch(x){er.textContent=x.message;er.hidden=false;btn.disabled=false;btn.textContent="Confirm booking";await loadTaken();}};
 };
+
+/* ---------- customer booking flow: one question per screen ----------
+   Steps: what → when → where → (free account, for visitors) → check and confirm.
+   Each step has its own address (#/book/when …), so the phone's back gesture goes back a step.
+   The draft is kept on the phone, so nothing is lost if the visitor has to confirm their email first. */
+const FLOW_ICON={
+  back:'<path d="M15 18l-6-6 6-6"/>',x:'<path d="M18 6 6 18M6 6l12 12"/>',
+  drop:'<path d="M12 3c-4 5.5-6.5 9-6.5 12.5a6.5 6.5 0 0 0 13 0C18.5 12 16 8.5 12 3z"/>',
+  cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  pin:'<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  car:'<path d="M5 17h14M3 17v-4l2.2-5.2A2 2 0 0 1 7 6.5h10a2 2 0 0 1 1.8 1.3L21 13v4M3 13h18"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  gift:'<rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8S10 3 7.5 4.5 9 8 12 8zM12 8s2-5 4.5-3.5S15 8 12 8z"/>'};
+const fi=n=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${FLOW_ICON[n]}</svg>`;
+const FLOW_T={svc:"What would you like?",when:"When suits you?",where:"Where should we come?",you:"Create your free account",review:"Check and confirm"};
+const flowSteps=()=>S.me?["svc","when","where","review"]:["svc","when","where","you","review"];
+const GENERIC_PKG=/^4 washes a month, same day and time each week\.?$/i;
+const DRAFT="washlys-draft";
+function saveDraft(){try{if(S.book&&!S.book.customer)localStorage.setItem(DRAFT,JSON.stringify(Object.assign({},S.book,{at:Date.now()})))}catch(e){}}
+function loadDraft(){try{const d=JSON.parse(localStorage.getItem(DRAFT)||"null");if(d&&Date.now()-d.at<864e5)return d}catch(e){}return null}
+function clearDraft(){try{localStorage.removeItem(DRAFT)}catch(e){}}
+const tapFeel=()=>{try{navigator.vibrate&&navigator.vibrate(8)}catch(e){}};
+
+function flowState(){
+  if(!S.book||S.book.customer)S.book=loadDraft()||{svc:null,date:null,slot:null,address:"",notes:"",promo:"",customer:null,pay:"now",kind:"once",size:"sedan"};
+  const b=S.book;b.kind=b.kind||"once";b.pay=b.pay||"now";
+  b.size=S.me?(S.me.car_size||"sedan"):(b.size||"sedan");
+  if(!b.address&&S.me)b.address=[S.me.address,S.me.suburb].filter(Boolean).join(", ");
+  if(!b.promo&&!b.promoCleared&&promoSaved())b.promo=promoSaved();
+  return b;
+}
+function flowStep(arg){
+  const b=flowState(),L=flowSteps();
+  if(b.svc&&!S.services.some(s=>s.id===b.svc&&s.active))b.svc=null;
+  if(b.date&&!bookableDays(false).includes(b.date)){b.date=null;b.slot=null}
+  let want=arg==="you"&&S.me?"review":L.includes(arg)?arg:"svc";
+  const miss=!b.svc?"svc":!(b.date&&b.slot)?"when":!String(b.address||"").trim()?"where":!S.me?"you":"review";
+  if(L.indexOf(want)>L.indexOf(miss))want=miss;
+  const h="#/book"+(want==="svc"?"":"/"+want);
+  if(location.hash!==h)history.replaceState(null,"",h);
+  return want;
+}
+const flowSvc=()=>S.book&&S.services.find(s=>s.id===S.book.svc);
+const flowEst=(b,svc)=>svc&&S.me?estimate(b,svc,S.me):null;
+
+function flowHead(step){
+  const L=flowSteps(),i=L.indexOf(step);
+  return `<div class="flowhead"><button type="button" class="iconbtn ${i?"":"hide"}" data-flow="back" aria-label="Back">${fi("back")}</button>
+    <div class="fh-mid"><span>Step ${i+1} of ${L.length}</span><div class="prog" role="progressbar" aria-valuemin="1" aria-valuemax="${L.length}" aria-valuenow="${i+1}"><i style="width:${(i+1)/L.length*100}%"></i></div></div>
+    <button type="button" class="iconbtn" data-flow="close" aria-label="Close">${fi("x")}</button></div>`;
+}
+function flowBar(step,b,svc){
+  const est=flowEst(b,svc);
+  const price=!svc?"":est?(est.total==null?"Price to confirm":R(est.payable)):priceLabel(svc,b.size);
+  let label="Continue",ok=true,sub=svc?esc(svc.name):"Choose a wash";
+  if(step==="svc")ok=!!svc;
+  if(step==="when"){ok=!!(b.date&&b.slot);if(ok)sub=`${esc(svc.name)} · ${fmtD(b.date)}, ${b.slot}`}
+  if(step==="you")label="Create account";
+  if(step==="review"){const card=!svc.custom&&cardsOn()&&b.pay==="now"&&est&&est.payable>0,code=svc.kind==="once"&&b.promo&&est&&est.payable>0;
+    label=card?(code?"Continue to payment":`Pay ${R(est.payable)}`):"Confirm booking";
+    sub=svc.custom?"We confirm the price with you":est&&est.payable===0?"Nothing to pay":code?"Before the code":card?"By card, on Yoco's secure page":"Pay on the day"}
+  return `<div class="flowbar"><div class="fb-in"><div class="fb-sum">${svc?`<b>${price}</b>`:""}<span>${sub}</span></div><button class="btn" id="next" type="submit" ${ok?"":"disabled"}>${label}</button></div></div>`;
+}
+
+function stepSvc(b){
+  const list=S.services.filter(s=>s.kind===b.kind&&s.active);
+  return `<h1>${FLOW_T.svc}</h1>
+    <div class="seg" role="group" aria-label="Type of booking"><button type="button" data-kind="once" aria-pressed="${b.kind==="once"}">Once-off wash</button><button type="button" data-kind="monthly" aria-pressed="${b.kind==="monthly"}">Monthly package</button></div>
+    ${b.kind==="monthly"?`<p class="small muted">4 washes in one month, on the same day and time each week. A package doesn't renew by itself.</p>`:""}
+    ${S.me?"":`<div class="fl"><span class="lbl">Your vehicle</span><div class="seg sizes" role="group" aria-label="Vehicle size">${Object.entries(SIZES).map(([k,l])=>`<button type="button" data-size="${k}" aria-pressed="${b.size===k}">${l.replace(" / ","/")}${extraFor(k)?`<small>+R${extraFor(k)} a wash</small>`:`<small>Standard</small>`}</button>`).join("")}</div></div>`}
+    <div class="opts">${list.map(s=>`<button type="button" class="opt" data-svc="${s.id}" aria-pressed="${b.svc===s.id}"><span class="radio"></span><span class="o-main"><b>${esc(s.name)}</b>${GENERIC_PKG.test(s.description||"")?"":`<span>${esc(s.description)}</span>`}</span><span class="o-pr">${priceLabel(s,b.size)}</span></button>`).join("")||`<p class="muted">Nothing here at the moment.</p>`}</div>
+    ${S.me?`<p class="small muted">Prices for your ${esc(S.me.car||"car")} (${(SIZES[b.size]||"").toLowerCase()}). <a href="#/account">Change</a></p>`:""}
+    ${b.promo&&b.kind==="once"?`<div class="hint">${fi("gift")}<span>Your code <b>${esc(b.promo)}</b> is saved and applied when you confirm.</span></div>`:""}`;
+}
+function stepWhen(b,svc){
+  const days=bookableDays(false),ts=takenSet(),slots=setts().slots;
+  const full=d=>slots.every(s=>!slotFree(d,s,svc,ts));
+  if(!b.date){const d=days.find(x=>!full(x));if(d)b.date=d}
+  return `<h1>${FLOW_T.when}</h1>
+    <p class="lead">${svc.kind==="monthly"?"Choose your first wash. We then come on the same day and time for 4 weeks.":"Book at least one day ahead."}</p>
+    <div class="days" id="days" role="group" aria-label="Day">${days.map(d=>{const f=full(d);return `<button type="button" class="day" data-day="${d}" aria-pressed="${b.date===d}" ${f?"disabled":""} aria-label="${fmtD(d,{weekday:"long",day:"numeric",month:"long"})}${f?", fully booked":""}"><small>${fmtD(d,{weekday:"short"})}</small><b>${fmtD(d,{day:"numeric"})}</b><small>${f?"Full":fmtD(d,{month:"short"})}</small></button>`}).join("")}</div>
+    ${b.date?`<div class="fl"><span class="sub">${fmtD(b.date,{weekday:"long",day:"numeric",month:"long"})}</span>
+      <div class="times" role="group" aria-label="Time">${slots.map(s=>{const free=slotFree(b.date,s,svc,ts);return `<button type="button" class="time" data-slot="${s}" aria-pressed="${b.slot===s}" ${free?"":"disabled"}><b>${s}</b>${free?"":"<small>Taken</small>"}</button>`}).join("")}</div></div>
+      ${svc.kind==="monthly"&&b.slot?`<div class="fl"><span class="lbl small muted"><b>Your 4 washes at ${b.slot}</b></span><div class="weeks">${[0,1,2,3].map(i=>`<span>${fmtD(addD(b.date,7*i),{weekday:"short",day:"numeric",month:"short"})}</span>`).join("")}</div></div>`:""}`
+    :`<p class="muted">No free days in the next ${setts().days_ahead} days. Please contact us.</p>`}`;
+}
+function stepWhere(b){
+  return `<h1>${FLOW_T.where}</h1><p class="lead">We bring everything. We just need access to the car.</p>
+    <label>Address for this wash<input name="address" autocomplete="street-address" placeholder="e.g. 14 Heugh Rd, Walmer" value="${esc(b.address)}"></label>
+    <label>Notes for us (optional)<textarea name="notes" rows="3" placeholder="Gate code, where to park, where the tap is…">${esc(b.notes)}</textarea></label>
+    <p class="errbox" id="bkErr" role="alert" hidden></p>`;
+}
+function stepYou(b){
+  return `<h1>${FLOW_T.you}</h1>
+    ${freeNote()}
+    <div class="stack" style="gap:12px">
+      <label>Full name<input name="name" autocomplete="name"></label>
+      <label>Cell number<input name="cell" type="tel" inputmode="tel" autocomplete="tel" placeholder="e.g. 082 555 0134"></label>
+      <label>Email<input name="email" type="email" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false"></label>
+      <label>Password (at least 8 characters)<input name="password" type="password" autocomplete="new-password" minlength="8"></label>
+      <label>Car<input name="car" placeholder="e.g. VW Polo, red"></label>
+      <label>Registration (optional)<input name="reg" placeholder="e.g. HGF 123 EC" autocapitalize="characters" autocorrect="off" spellcheck="false"></label>
+    </div>
+    <p class="tiny muted">Vehicle size: ${SIZES[b.size]}. We use your details only to do your washes and contact you about them. You can delete your account at any time.</p>
+    <p class="errbox" id="bkErr" role="alert" hidden></p>
+    <p class="small">Already have an account? <a href="#/login">Log in</a>. Your booking is kept.</p>`;
+}
+function stepReview(b,svc){
+  const est=flowEst(b,svc),me=S.me,once=svc.kind==="once";
+  const when=svc.kind==="monthly"?`${fmtD(b.date,{weekday:"long"})}s at ${b.slot}<span>${[0,1,2,3].map(i=>fmtD(addD(b.date,7*i),{day:"numeric",month:"short"})).join(", ")}</span>`:`${fmtD(b.date,{weekday:"long",day:"numeric",month:"long"})}<span>${b.slot}</span>`;
+  const row=(ic,main,go)=>`<div class="srow"><span class="si">${fi(ic)}</span><span class="sx">${main}</span>${go?`<button type="button" class="chg" data-flow-go="${go}">Change</button>`:`<a class="chg" href="#/account">Change</a>`}</div>`;
+  const showPay=!svc.custom&&cardsOn()&&est&&est.payable>0,req=payRequired();
+  return `<h1>${FLOW_T.review}</h1>
+    <div class="sumcard">
+      ${row("drop",`<b>${esc(svc.name)}</b><span>${svc.kind==="monthly"?"4 washes this month":esc(svc.description||"")}</span>`,"svc")}
+      ${row("cal",`<b>${when.replace("<span>","</b><span>")}`,"when")}
+      ${row("pin",`<b>${esc(b.address)}</b>${b.notes?`<span>${esc(b.notes)}</span>`:""}`,"where")}
+      ${row("car",`<b>${esc(me.car||"Your car")}</b><span>${SIZES[me.car_size]||""}${me.reg?" · "+esc(me.reg):""}</span>`,null)}
+    </div>
+    <div class="sumcard"><div class="lines">
+      ${svc.custom?`<div class="line"><span>Price</span><span>R${(+svc.price).toFixed(0)}–R${(+svc.price_max).toFixed(0)}</span></div><p class="small muted">We'll agree the price with you before the first wash.</p>`
+      :`<div class="line"><span>${est.total===0&&once?"Loyalty reward":esc(svc.name)}</span><span>${est.total===0?"Free":R(est.total)}</span></div>
+        ${extraFor(me.car_size)&&est.total?`<div class="line small muted"><span>Includes ${SIZES[me.car_size].toLowerCase()} extra</span><span>+R${(extraFor(me.car_size)*(svc.kind==="monthly"?4:1)).toFixed(2)}</span></div>`:""}
+        ${once&&b.promo&&est.total?`<div class="line small"><span>Code ${esc(b.promo)}</span><span>Applied when you book</span></div>`:""}
+        ${est.credit?`<div class="line"><span>Your credit</span><span>−${R(est.credit)}</span></div>`:""}
+        <div class="line total"><span>${once&&b.promo&&est.payable?"To pay, before the code":"To pay"}</span><span>${R(est.payable)}</span></div>`}
+    </div></div>
+    ${once?(b.promo||b.showPromo?`<label>Promo code<input name="promo" value="${esc(b.promo)}" placeholder="e.g. FUELFRIEND10" autocapitalize="characters" autocorrect="off" spellcheck="false"></label>${b.promo?`<button type="button" class="linkbtn small" data-promo-clear style="align-self:flex-start">Remove code</button>`:""}`
+      :`<button type="button" class="linkbtn" data-promo-open style="align-self:flex-start">Have a promo code?</button>`):""}
+    ${showPay?`<div class="fl"><span class="sub">How would you like to pay?</span><div class="opts">
+      <button type="button" class="opt" data-pay="now" aria-pressed="${b.pay==="now"}"><span class="radio"></span><span class="o-main"><b>Pay now by card</b><span>Yoco's secure page. We hold your time for ${holdMins()} minutes while you pay.</span></span></button>
+      <button type="button" class="opt" data-pay="day" aria-pressed="${b.pay==="day"}"><span class="radio"></span><span class="o-main"><b>Pay on the day</b><span>${req?"Only with a special event code":"Cash or card when we arrive"}</span></span></button></div></div>`
+      :svc.custom||!(est&&est.payable===0)?`<div class="hint">${fi("info")}<span>${svc.custom?"Once the price is agreed, you can pay "+(cardsOn()?"in the app"+(req?"":" or on the day"):"on the day")+".":"You pay on the day, by cash or card when we arrive."}</span></div>`:""}
+    <p class="small muted">${svc.kind==="monthly"?"This package is 4 washes this month and doesn't renew by itself.":"You pay for this wash only."} No subscription, no hidden fees. Move or cancel in the app up to the day before.</p>
+    <details class="more"><summary>Good to know</summary>${RULES}</details>
+    <p class="errbox" id="bkErr" role="alert" hidden></p>`;
+}
+
+function flowView(arg){
+  const step=flowStep(arg),b=S.book,svc=flowSvc();S.lastStep=step;
+  const body=step==="svc"?stepSvc(b):step==="when"?stepWhen(b,svc):step==="where"?stepWhere(b):step==="you"?stepYou(b):stepReview(b,svc);
+  const dir=S.flowDir;S.flowDir="";
+  return `${flowHead(step)}<form class="flow-wrap" id="fFlow" novalidate><div class="step ${dir}">${body}</div>${flowBar(step,b,svc)}</form>`;
+}
+function flowAfter(){
+  const f=$("#fFlow");if(!f)return;const b=S.book,step=S.lastStep,L=flowSteps();
+  const keep=()=>{const v=Object.fromEntries(new FormData(f));if("address" in v)b.address=String(v.address);if("notes" in v)b.notes=String(v.notes);
+    if("promo" in v){b.promo=String(v.promo).toUpperCase().replace(/[^A-Z0-9]/g,"");if(!b.promo)b.promoCleared=true}saveDraft()};
+  const redraw=()=>{const y=scrollY,dx=($("#days")||{}).scrollLeft;render();scrollTo(0,y);if(dx!=null&&$("#days"))$("#days").scrollLeft=dx};
+  const next=()=>{S.flowPush=(S.flowPush||0)+1;go("book/"+L[L.indexOf(step)+1])};
+  const fail=(html)=>{const er=$("#bkErr");if(!er)return;er.innerHTML=html;er.hidden=false;er.scrollIntoView({block:"center",behavior:"smooth"})};
+  f.oninput=()=>{keep();const er=$("#bkErr");if(er)er.hidden=true};
+  f.onclick=e=>{
+    const t=e.target.closest("[data-svc],[data-kind],[data-size],[data-day],[data-slot],[data-pay],[data-flow],[data-flow-go],[data-promo-open],[data-promo-clear]");if(!t)return;
+    const d=t.dataset;keep();
+    if(d.flow==="close"){S.flowPush=0;go("home");return}
+    if(d.flow==="back"){const i=L.indexOf(step);if(S.flowPush>0){S.flowPush--;history.back()}else location.replace("#/book/"+(i>1?L[i-1]:""));return}
+    if(d.flowGo){S.flowPush=(S.flowPush||0)+1;go("book"+(d.flowGo==="svc"?"":"/"+d.flowGo));return}
+    if(d.svc){tapFeel();const id=+d.svc;if(b.svc!==id){b.svc=id;b.slot=null}saveDraft();redraw();setTimeout(next,170);return}
+    if(d.kind){b.kind=d.kind}
+    else if(d.size){b.size=d.size}
+    else if(d.day){tapFeel();b.date=d.day;b.slot=null}
+    else if(d.slot){tapFeel();b.slot=d.slot}
+    else if(d.pay){b.pay=d.pay}
+    else if("promoOpen" in d){b.showPromo=true;saveDraft();redraw();const i=f.querySelector("[name=promo]");if(i)i.focus();return}
+    else if("promoClear" in d){b.promo="";b.showPromo=false;b.promoCleared=true;try{sessionStorage.removeItem("washlys-promo")}catch(x){}}
+    saveDraft();redraw();
+    if(d.slot&&$("#next"))$("#next").focus({preventScroll:true});
+  };
+  f.onsubmit=async e=>{e.preventDefault();keep();const btn=$("#next");
+    if(step==="where"&&!b.address.trim())return fail("Please add the address where we should wash the car.");
+    if(step==="you")return flowSignup(f,btn,fail);
+    if(step==="review")return flowConfirm(btn,fail);
+    next()};
+  const sel=f.querySelector(".day[aria-pressed=true]"),c=$("#days");if(sel&&c){const a=sel.getBoundingClientRect(),r=c.getBoundingClientRect();if(a.right>r.right-8||a.left<r.left+8)c.scrollLeft+=a.left-r.left-16}
+}
+async function flowSignup(f,btn,fail){
+  const b=S.book,v=Object.fromEntries(new FormData(f));
+  const need=[["name","your name"],["cell","a cell number"],["email","your email"],["password","a password"],["car","your car"]].filter(([k])=>!String(v[k]||"").trim());
+  if(need.length)return fail("Please add "+need.map(x=>x[1]).join(", ")+".");
+  if(String(v.cell).replace(/\D/g,"").length<9)return fail("Please check the cell number.");
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email))return fail("Please check the email address.");
+  if(String(v.password).length<8)return fail("Your password needs at least 8 characters.");
+  btn.disabled=true;btn.textContent="Creating…";
+  try{const meta={name:v.name.trim(),cell:v.cell.trim(),address:b.address.trim(),suburb:"",car:v.car.trim(),reg:String(v.reg||"").trim().toUpperCase(),car_size:b.size,source:FROM_FF?"Fuel Friend":"App"};
+    const r=await api.signUp(v.email.trim(),v.password,meta);
+    if(!r.session){b.resume=true;saveDraft();
+      $(".step").innerHTML=`<h1>Check your email</h1><p>We've sent a link to <b>${esc(v.email)}</b>. Tap it to confirm your free account.</p><div class="hint">${fi("info")}<span>Your booking is saved on this phone. After you tap the link, you'll come straight back here to confirm it.</span></div>`;
+      $(".flowbar").hidden=true;return}
+    S.session=r.session;await loadMe();S.flowPush=(S.flowPush||0)+1;toast("Welcome! Your free account is ready.");go("book/review");
+  }catch(x){fail(esc(/registered|exists/i.test(x.message)?"There's already an account with that email.":x.message)+(/registered|exists/i.test(x.message)?` <a href="#/login" class="linkbtn">Log in instead</a>`:""));btn.disabled=false;btn.textContent="Create account"}
+}
+async function flowConfirm(btn,fail){
+  const b=S.book,svc=flowSvc(),old=btn.textContent;btn.disabled=true;btn.textContent="Booking…";
+  try{const payNow=b.pay==="now"&&cardsOn()&&!svc.custom;
+    const rows=await api.book({service:b.svc,date:b.date,slot:b.slot,address:b.address,notes:b.notes,promo:svc.kind==="once"?b.promo:"",customer:null,pay:payNow?"now":"day"});
+    try{sessionStorage.removeItem("washlys-promo")}catch(x){}clearDraft();S.book=null;S.flowPush=0;
+    const pending=rows.filter(r=>r.pay_status==="pending").map(r=>r.id);
+    if(pending.length){btn.textContent="Opening secure payment…";
+      try{const r=await api.payNow(pending);location.href=r.redirectUrl;return}
+      catch(x){await Promise.all([loadMe(),loadTaken()]);S.done=`Your booking is held until ${holdUntil(rows.find(r=>r.pay_status==="pending")||{})}, but the card payment didn't open: ${x.message}`;location.replace("#/washes");return}}
+    await Promise.all([loadMe(),loadTaken()]);S.booked=rows;$("#toast").hidden=true;location.replace("#/booked");
+  }catch(x){btn.disabled=false;btn.textContent=old;
+    const m=x.message||"";
+    fail(esc(m)+(/already taken/i.test(m)?` <button type="button" class="linkbtn" data-flow-go="when">Pick another time</button>`:/promo code/i.test(m)?` <button type="button" class="linkbtn" data-promo-clear>Remove the code</button>`:""));
+    try{await loadTaken()}catch(e){}}
+}
+
+/* ---------- booked: confirmation screen ---------- */
+function successScreen(title,msg,rows){
+  const r0=rows[0],many=rows.length>1;
+  return `<div class="done-screen"><div class="tick"><svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-15"/></svg></div>
+    <h1>${title}</h1><p class="muted">${msg}</p>
+    <div class="sumcard">
+      <div class="srow"><span class="si">${fi("drop")}</span><span class="sx"><b>${esc(r0.service_name)}</b><span>${SIZES[r0.car_size]||""}</span></span></div>
+      <div class="srow"><span class="si">${fi("cal")}</span><span class="sx"><b>${many?`${fmtD(r0.date,{weekday:"long"})}s at ${esc(r0.slot)}`:`${fmtD(r0.date,{weekday:"long",day:"numeric",month:"long"})}`}</b><span>${many?rows.map(x=>fmtD(x.date,{day:"numeric",month:"short"})).join(", "):esc(r0.slot)}</span></span></div>
+      <div class="srow"><span class="si">${fi("pin")}</span><span class="sx"><b>${esc(r0.address)}</b>${r0.notes?`<span>${esc(r0.notes)}</span>`:""}</span></div>
+    </div>
+    <div class="acts"><button type="button" class="btn ghost" data-ics>Add to calendar</button><a class="btn" href="#/washes">View my washes</a><a class="linkbtn" href="#/home">Back to home</a></div></div>`;
+}
+function icsFile(rows){
+  const stamp=d=>d.toISOString().replace(/[-:]/g,"").replace(/\.\d+/,"");
+  const at=(day,slot,add)=>{const [h,m]=slot.split(":").map(Number);const d=String(day).slice(0,10);return new Date(Date.UTC(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10),h-2+add,m))};/* South Africa is UTC+2 all year */
+  const tx=s=>String(s||"").replace(/\\/g,"\\\\").replace(/[,;]/g,m=>"\\"+m).replace(/\n/g,"\\n");
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Washly's//Bookings//EN","CALSCALE:GREGORIAN",
+    ...rows.flatMap(r=>["BEGIN:VEVENT",`UID:washlys-${r.id}@washlyscarwash.co.za`,`DTSTAMP:${stamp(new Date())}`,`DTSTART:${stamp(at(r.date,r.slot,0))}`,`DTEND:${stamp(at(r.date,r.slot,1))}`,
+      `SUMMARY:${tx("Washly's: "+r.service_name)}`,`LOCATION:${tx(r.address)}`,`DESCRIPTION:${tx("Washly's mobile car wash. To move or cancel, use the app by the day before.")}`,"END:VEVENT"]),
+    "END:VCALENDAR"].join("\r\n");
+}
+function downloadIcs(rows){
+  const txt=icsFile(rows);
+  if(isIOS){location.href="data:text/calendar;charset=utf-8,"+encodeURIComponent(txt);return}
+  const url=URL.createObjectURL(new Blob([txt],{type:"text/calendar"}));const a=document.createElement("a");a.href=url;a.download="washlys-booking.ics";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+VIEWS.booked=()=>{
+  const rows=S.booked;if(!rows||!rows.length)return VIEWS.home();
+  const tot=rows.every(r=>r.price!=null)?rows.reduce((a,r)=>a+ +r.price,0):null,paid=rows.every(r=>r.pay_status==="paid");
+  const msg=tot==null?"We'll confirm the price with you before the first wash.":tot===0?"This one's free. Enjoy!":paid?`Paid with your credit (${R(tot)}).`:`Total ${R(tot)}, paid on the day.`;
+  return successScreen("You're booked!",(rows.length>1?"Your 4 washes are booked. ":"")+msg,rows);
+};
+AFTER.booked=()=>{const bt=document.querySelector("[data-ics]");if(bt&&S.booked)bt.onclick=()=>downloadIcs(S.booked)};
+
+/* Admin books for a customer on one page (quicker for the business); customers get the step-by-step flow. */
+VIEWS.book=(arg)=>!api?notConnected():isAdmin()?legacyBook(arg):flowView(arg);
+AFTER.book=(arg)=>isAdmin()?legacyBookAfter(arg):flowAfter();
 
 /* ---------- my washes (customer) ---------- */
 VIEWS.washes=()=>{
@@ -642,7 +1003,9 @@ AFTER.paid=async(arg)=>{const [id,how]=String(arg||"").split("/");const box=$("#
   for(let i=0;i<25;i++){let pay=null;try{pay=await api.payment(id)}catch(e){}
     if(!$("#paidBox"))return;
     if(pay&&pay.status==="succeeded"){await Promise.all([loadMe(),loadTaken()]);const L=S.bookings.filter(x=>pay.booking_ids.includes(x.id));
-      $("#view").innerHTML=`<div class="center stack"><h1>Paid. Thank you!</h1><div class="card" style="border-color:var(--ok)"><p class="okmsg">R${(+pay.amount).toFixed(2)} paid by card.</p>${L.map(x=>`<div>${esc(x.service_name)} · ${fmtD(x.date,{weekday:"long",day:"numeric",month:"long"})} at ${esc(x.slot)}${x.status!=="booked"?` <span class="small muted">(no longer booked: the amount was added to your credit)</span>`:""}</div>`).join("")}<p class="small muted">Yoco emails your receipt. See you then!</p><div class="row"><a class="btn" href="#/washes">My washes</a><a class="btn ghost" href="#/home">Home</a></div></div></div>`;return}
+      const live=L.filter(x=>x.status==="booked");
+      if(live.length){$("#view").innerHTML=successScreen("Paid. Thank you!",`R${(+pay.amount).toFixed(2)} paid by card. Yoco emails your receipt. See you then!`,live);S.booked=live;AFTER.booked();return}
+      $("#view").innerHTML=`<div class="center stack"><h1>Paid. Thank you!</h1><div class="card" style="border-color:var(--ok)"><p class="okmsg">R${(+pay.amount).toFixed(2)} paid by card.</p>${L.map(x=>`<div>${esc(x.service_name)} · ${fmtD(x.date,{weekday:"long",day:"numeric",month:"long"})} at ${esc(x.slot)} <span class="small muted">(no longer booked: the amount was added to your credit)</span></div>`).join("")}<div class="row"><a class="btn" href="#/washes">My washes</a><a class="btn ghost" href="#/home">Home</a></div></div></div>`;return}
     if(pay&&pay.status==="failed"){box.innerHTML=`<p>The payment didn't go through. Nothing was charged.</p><a class="btn" href="#/washes">My washes</a>`;return}
     await new Promise(r=>setTimeout(r,1600))}
   box.innerHTML=`<p>We're still waiting for Yoco to confirm. If you paid, your booking will show as <b>Paid</b> under My washes shortly. You won't be charged twice.</p><a class="btn" href="#/washes">My washes</a>`};
@@ -904,6 +1267,8 @@ const PRICE_LIST=[["Wash & Dry","once",75,null,"Outside wash and tyre polish"],[
     }
   }catch(e){console.error(e);toast("Couldn't reach the booking system. Check your connection and refresh.")}
   if(!S.services.length)S.services=PRICE_LIST;
+  /* Back from the email-confirmation link: carry on with the booking they started. */
+  const d=loadDraft();if(S.me&&!isAdmin()&&d&&d.resume&&d.svc&&!/^#\/(book|paid)/.test(location.hash)){d.resume=false;S.book=d;saveDraft();history.replaceState(null,"","#/book/review")}
   S.loading=false;render();
 })();
 /* Offline banner */
