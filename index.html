@@ -193,7 +193,19 @@ function supaApi(url,key){
     async services(){return chk(await sb.from("services").select("*").order("sort").order("id"))},
     async settings(){return chk(await sb.from("settings").select("*").eq("id",1).single())},
     async taken(a,b){return chk(await sb.rpc("taken_slots",{p_from:a,p_to:b}))},
-    async book(o){return chk(await sb.rpc("book",{p_service:o.service,p_date:o.date,p_slot:o.slot,p_address:o.address||"",p_notes:o.notes||"",p_promo:o.promo||"",p_customer:o.customer||null}))},
+    async book(o){return chk(await sb.rpc("book",{p_service:o.service,p_date:o.date,p_slot:o.slot,p_address:o.address||"",p_notes:o.notes||"",p_promo:o.promo||"",p_customer:o.customer||null,p_pay:o.pay||"day"}))},
+    /* Card payments run through the "payments" function on Supabase, which talks to Yoco. */
+    async fn(body){const r=await sb.functions.invoke("payments",{body});if(r.error){let m=r.error.message;try{const j=await r.error.context.json();m=j.error||m}catch(e){}throw new Error(m)}return r.data},
+    payNow(ids){return this.fn({action:"checkout",booking_ids:ids})},
+    refund(paymentId){return this.fn({action:"refund",payment_id:paymentId})},
+    yocoStatus(){return this.fn({action:"status"})},
+    yocoSetup(){return this.fn({action:"setup"})},
+    async payLater(ids){return chk(await sb.rpc("pay_later",{p_booking_ids:ids}))},
+    async payment(id){return chk(await sb.from("payments").select("*").eq("id",id).single())},
+    async payments(){return chk(await sb.from("payments").select("*").order("created_at",{ascending:false}).limit(500))},
+    async promos(){return chk(await sb.from("promos").select("*").order("code"))},
+    async savePromo(p,isNew){return isNew?chk(await sb.from("promos").insert(p).select().single()):chk(await sb.from("promos").update(p).eq("code",p.code).select().single())},
+    async setCredit(id,amt){return chk(await sb.rpc("set_credit",{p_customer:id,p_amount:amt}))},
     async bookings(){return chk(await sb.from("bookings").select("*").order("date").order("slot"))},
     async cancel(id){return chk(await sb.rpc("cancel_booking",{p_id:id}))},
     async move(id,date,slot){return chk(await sb.rpc("move_booking",{p_id:id,p_date:date,p_slot:slot}))},
@@ -213,7 +225,7 @@ const api=rawApi&&new Proxy(rawApi,{get:(t,k)=>typeof t[k]!=="function"?t[k]:asy
   catch(e){if(!navigator.onLine||NET.test(e.message||"")){setOffline(true);throw new Error("No connection. Check your signal and try again.")}throw e}}});
 
 /* ================= state ================= */
-const S={session:null,me:null,services:[],settings:null,bookings:[],profiles:[],taken:[],fuel:null,fuelErr:"",fuelCity:"gqb",
+const S={session:null,me:null,services:[],settings:null,bookings:[],profiles:[],payments:[],promos:[],taken:[],fuel:null,fuelErr:"",fuelCity:"gqb",yoco:null,
   book:null,done:null,adminFilter:"upcoming",custQ:"",recovery:false,loading:true};
 try{S.fuelCity=localStorage.getItem("washlys-fuel-city")||"gqb"}catch(e){}
 const qs=new URLSearchParams(location.search);
@@ -234,6 +246,7 @@ async function loadMe(){
   S.me=await api.profile(S.session.user.id);
   S.bookings=await api.bookings()||[];
   S.profiles=isAdmin()?(await api.profiles()||[]):[S.me];
+  S.payments=isAdmin()?(await api.payments()||[]):[];
 }
 async function loadTaken(){
   if(!api)return;const t=todayISO();
@@ -259,9 +272,9 @@ function navItems(){
   return [["home","Home","home"],["prices","Prices","tag"],["fuel","Fuel Friend","fuel"],["login","Log in","user"]];
 }
 function route(){
-  const h=(location.hash||"#/").replace(/^#\/?/,"");const [v,arg]=h.split("/");
+  const h=(location.hash||"#/").replace(/^#\/?/,"");const parts=h.split("/"),v=parts[0],arg=parts.slice(1).join("/");
   let view=v||(isAdmin()?"today":"home");
-  const allowed=new Set(navItems().map(x=>x[0]).concat(["signup","login","reset","newpass","prices","home"],isAdmin()?["customer"]:[]));
+  const allowed=new Set(navItems().map(x=>x[0]).concat(["signup","login","reset","newpass","prices","home"],S.me?["paid"]:[],isAdmin()?["customer"]:[]));
   if(!allowed.has(view))view=S.me?(isAdmin()?"today":"home"):(["book","washes","account"].includes(view)?"login":"home");
   if(isAdmin()&&view==="home")view="today";
   if(S.recovery)view="newpass";
@@ -306,17 +319,53 @@ function sizeTable(){const e=setts().size_extra||{};return `<table><tbody>${Obje
 const RULES=`<ul class="small" style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px">
   <li>Once-off washes must be booked at least one day in advance, so we can agree a time that suits you and us.</li>
   <li>Monthly packages are 4 washes in a month, on the same day and time each week.</li>
-  <li>To move or cancel a wash, do it in the app (or tell us) by the day before at the latest. Otherwise a missed wash is forfeited.</li></ul>`;
+  <li>To move or cancel a wash, do it in the app (or tell us) by the day before at the latest. If you cancel a wash you've paid for, you're refunded. Otherwise a missed wash is forfeited.</li></ul>`;
 const custOf=id=>S.profiles.find(p=>p.id===id)||(S.me&&S.me.id===id?S.me:null)||{name:"Unknown customer"};
 const myBookings=()=>S.bookings.filter(b=>S.me&&b.customer_id===S.me.id);
 function stampInfo(list){
   const every=+setts().loyalty_every||0;const n=list.filter(b=>b.kind==="once"&&b.status!=="cancelled"&&b.status!=="missed").length;
   return {every,n,inCard:every?n%every:0};
 }
+/* ---------- payments ---------- */
+const PAY={unpaid:"Pay on the day",pending:"Waiting for payment",paid:"Paid",credited:"Credit returned",refund_due:"Refund due",refunded:"Refunded"};
+const due=b=>b.price==null?null:Math.max(0,+b.price-(+b.credit_used||0)-(+b.paid_amount||0));
+const holdMins=()=>+(setts().pay_hold_minutes||30);
+const holdUntil=b=>{if(!b.pending_since)return"";const d=new Date(new Date(b.pending_since).getTime()+holdMins()*60000);return d.toLocaleTimeString("en-ZA",{hour:"2-digit",minute:"2-digit",timeZone:TZ})};
+const cardsOn=()=>!!setts().cards_on;
+const payRequired=()=>cardsOn()&&setts().pay_mode==="required";
+function payBadge(b){
+  if(b.status==="cancelled"&&!["credited","refunded","refund_due"].includes(b.pay_status))return"";
+  const cls=b.pay_status==="paid"?"done":b.pay_status==="pending"||b.pay_status==="refund_due"?"sun":b.pay_status==="refunded"||b.pay_status==="credited"?"":"";
+  const how=b.pay_status==="paid"&&b.pay_method?` · ${b.pay_method==="card online"?"card":b.pay_method}`:"";
+  return `<span class="badge ${cls}">${PAY[b.pay_status]||""}${how}</span>`;
+}
+/* Yoco refunds whole card payments only: possible in one go when every wash in that payment is cancelled. */
+function wholeRefundOk(b){const pay=S.payments.find(x=>x.id===b.payment_id);if(!pay||pay.status!=="succeeded"||pay.mode!=="live")return false;
+  return S.bookings.filter(x=>pay.booking_ids.includes(x.id)&&x.payment_id===pay.id).every(x=>x.status==="cancelled"&&["refund_due","refunded","unpaid"].includes(x.pay_status))}
+/* The washes paid together: a monthly package's other unpaid washes go with it. */
+function payGroup(b){return b.package_id?S.bookings.filter(x=>x.package_id===b.package_id&&x.status==="booked"&&["unpaid","pending"].includes(x.pay_status)&&x.price!=null&&x.date>=todayISO()):[b]}
+async function startCardPayment(ids,btn){
+  if(btn){btn.disabled=true;btn.textContent="Opening secure card payment…"}
+  try{const r=await api.payNow(ids);location.href=r.redirectUrl;return true}
+  catch(x){if(btn){btn.disabled=false;btn.textContent="Pay now by card"}toast(x.message);return false}
+}
+
 function bookingCard(b,opts={}){
   const c=custOf(b.customer_id),t=todayISO(),canChange=b.status==="booked"&&(isAdmin()||b.date>t);
-  const badges=[`<span class="badge ${b.status}">${STATUS[b.status]||b.status}</span>`,b.kind==="monthly"?`<span class="badge">Wash ${b.wash_no} of 4</span>`:"",b.reward?`<span class="badge sun">Free loyalty wash</span>`:"",b.promo?`<span class="badge sun">${esc(b.promo)}</span>`:""].join(" ");
-  const price=b.price==null?`<b class="err">Price to confirm</b>`:`${R(b.price)}${b.list_price!=null&&+b.list_price!==+b.price?` <s class="muted small">${R(b.list_price)}</s>`:""}`;
+  const badges=[`<span class="badge ${b.status}">${STATUS[b.status]||b.status}</span>`,payBadge(b),b.kind==="monthly"?`<span class="badge">Wash ${b.wash_no} of 4</span>`:"",b.reward?`<span class="badge sun">Free loyalty wash</span>`:"",b.promo?`<span class="badge sun">${esc(b.promo)}</span>`:""].join(" ");
+  const price=b.price==null?`<b class="err">Price to confirm</b>`:`${R(b.price)}${b.list_price!=null&&+b.list_price!==+b.price?` <s class="muted small">${R(b.list_price)}</s>`:""}${+b.credit_used>0?` <span class="small muted">(R${(+b.credit_used).toFixed(2)} from credit)</span>`:""}`;
+  const owe=due(b),live=b.status==="booked"&&b.date>=t,grp=live&&!opts.admin?payGroup(b):[];
+  const payRow=!live||b.status!=="booked"?(
+      b.pay_status==="refund_due"?(opts.admin?`<div class="free" style="border-color:var(--sun)"><b>Refund due: R${(+b.refund_due).toFixed(2)}</b> <span class="small">${b.pay_method==="card online"?"paid by card":"paid on the day"}</span>
+          <div class="row" style="margin-top:8px">${b.pay_method==="card online"&&wholeRefundOk(b)?`<button class="btn sm" data-act="refund">Refund to card</button>`:""}<button class="btn sm ghost" data-act="markRefunded">Mark as refunded</button></div>
+          ${b.pay_method==="card online"&&!wholeRefundOk(b)?`<p class="tiny muted">Yoco can only refund a whole card payment${(S.payments.find(x=>x.id===b.payment_id)||{}).mode==="test"?" (and not test payments)":""}. Pay this back another way (e.g. EFT), then tap "Mark as refunded".</p>`:""}</div>`
+        :`<div class="small"><b>Refund of R${(+b.refund_due).toFixed(2)} due.</b> Washly's will pay it back to you.</div>`)
+      :b.pay_status==="refunded"&&+b.paid_amount>0?`<div class="small okmsg">R${(+b.paid_amount).toFixed(2)} refunded${b.pay_method==="card online"?" to the card":""}.</div>`
+      :b.pay_status==="credited"&&+b.credited>0?`<div class="small okmsg">R${(+b.credited).toFixed(2)} credit returned to ${opts.admin?"their":"your"} account.</div>`:"")
+    :opts.admin?(["unpaid","pending"].includes(b.pay_status)&&owe>0?`<div class="row"><button class="btn sm ghost" data-act="paidDay">Paid on the day (R${owe.toFixed(2)})</button>${b.pay_status==="pending"?`<span class="tiny muted">Customer is paying by card; held until ${holdUntil(b)}</span>`:""}</div>`
+        :b.pay_status==="paid"&&b.pay_method==="card online"&&b.payment_id?`<div class="row"><button class="btn sm warn" data-act="refund">Refund to card</button></div>`:"")
+    :b.pay_status==="pending"?`<div class="free" style="border-color:var(--sun)"><b>Finish paying to keep this booking.</b> It's held until ${holdUntil(b)}.<div class="row" style="margin-top:8px"><button class="btn sm" data-act="payNow">Pay now by card${grp.length>1?` (${grp.length} washes)`:""}</button>${!payRequired()||b.pay_later_ok?`<button class="btn sm ghost" data-act="payLater">Pay on the day instead</button>`:""}</div></div>`
+    :b.pay_status==="unpaid"&&owe>=2&&cardsOn()?`<div class="row"><button class="btn sm" data-act="payNow">Pay now by card (R${(grp.length>1?grp.reduce((a,x)=>a+due(x),0):owe).toFixed(2)}${grp.length>1?` for ${grp.length} washes`:""})</button></div>`:"";
   return `<div class="bk" data-bk="${b.id}">
     <div class="between"><span class="when">${opts.noDate?"":fmtD(b.date)+" · "}${esc(b.slot)}</span><span>${badges}</span></div>
     ${opts.admin?`<div><a href="#/customer/${esc(b.customer_id)}"><b>${esc(c.name)}</b></a> <span class="tiny muted">${esc(c.account_no||"")}</span></div>`:""}
@@ -324,6 +373,7 @@ function bookingCard(b,opts={}){
     ${opts.admin?`<div class="small muted">${esc([c.car,c.reg].filter(Boolean).join(" · "))}</div>`:""}
     <div class="small muted">${esc(b.address)}</div>
     ${b.notes?`<div class="small">Note: ${esc(b.notes)}</div>`:""}
+    ${payRow}
     ${opts.admin&&c.cell?`<div class="row small"><a href="tel:${esc(c.cell.replace(/\s/g,""))}">Call ${esc(c.cell)}</a><a href="${waLink(c.cell)}" target="_blank" rel="noopener">WhatsApp</a></div>`:""}
     ${canChange?`<div class="row">${opts.admin?`<button class="btn sm" data-act="status" data-st="done">Done</button><button class="btn sm ghost" data-act="status" data-st="missed">Missed</button>`:""}<button class="btn sm ghost" data-act="move">Move</button><button class="btn sm warn" data-act="cancel">Cancel</button>${opts.admin?`<button class="btn sm ghost" data-act="price">Set price</button>`:""}</div>`:
       (b.status==="booked"&&!isAdmin()?`<div class="tiny muted">It's too late to change this in the app. Please contact us.</div>`:"")}
@@ -355,6 +405,7 @@ VIEWS.home=()=>{
   return `<div class="stack">
     <div><span class="eyebrow">Account ${esc(S.me.account_no||"")}</span><h1>Hi ${esc(S.me.name.split(" ")[0]||"there")}</h1></div>
     ${S.done?`<div class="card" style="border-color:var(--ok)"><b class="okmsg">${esc(S.done)}</b></div>`:""}
+    ${creditNote()}
     ${installCard()}
     <div class="card"><h2>Your next wash</h2>${next?bookingCard(next):`<p class="muted">Nothing booked yet.</p>`}<div class="row"><a class="btn" href="#/book">Book a wash</a>${next?`<a class="btn ghost" href="#/washes">All my washes</a>`:""}</div></div>
     ${st.every?`<div class="card"><div class="between"><h2>Loyalty card</h2><span class="small muted">Every ${st.every}th once-off wash is free</span></div>
@@ -384,7 +435,12 @@ function installCard(){
   let body="";
   if(installEvt)body=`<p class="small">Add it to your home screen: it opens full-screen like any other app, and there's nothing to download from an app store.</p><div class="row"><button class="btn sm" data-act="install">Install the app</button></div>`;
   else if(isIOS&&inAppBrowser)body=`<p class="small">To put Washly's on your home screen, open this page in Safari first: tap <b>⋯</b> or the compass icon, then <b>Open in browser</b>.</p>`;
-  else if(isIOS)body=`<p class="small">On your iPhone: tap ${share} <b>Share</b> at the bottom of Safari, then <b>Add to Home Screen</b>. Washly's then opens full-screen like any other app.</p>`;
+  else if(isIOS&&/CriOS|FxiOS|EdgiOS/.test(UA))body=`<p class="small">Tap ${share} <b>Share</b> (next to the address bar, or under <b>⋯</b>), scroll down and tap <b>Add to Home Screen</b>, then <b>Add</b>.</p>`;
+  else if(isIOS)body=`<ol class="small" style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px">
+      <li>Tap <b>⋯</b> next to Safari's address bar, then ${share} <b>Share</b>. (On older iPhones, tap ${share} Share at the bottom of the screen.)</li>
+      <li>Scroll down and tap <b>Add to Home Screen</b>. Not there? Tap <b>Edit Actions</b> at the bottom of that list and add it.</li>
+      <li>Keep <b>Open as Web App</b> on, then tap <b>Add</b>.</li></ol>
+    <p class="tiny muted">There's nothing to download from the App Store: Washly's appears on your home screen and opens full-screen like any other app.</p>`;
   else if(/Android/i.test(UA))body=`<p class="small">In Chrome, tap <b>⋮</b> at the top right, then <b>Add to Home screen</b> or <b>Install app</b>.</p>`;
   else return "";
   return `<div class="card install" id="installCard"><div class="between"><h3>Get the Washly's app</h3><button class="linkbtn small" data-act="hideInstall">Not now</button></div>${body}</div>`;
@@ -456,7 +512,7 @@ AFTER.newpass=()=>{$("#fNew").onsubmit=async e=>{e.preventDefault();const pw=Str
 
 /* ---------- book ---------- */
 function bookState(customerId){
-  if(!S.book||S.book.customer!==customerId)S.book={svc:null,date:null,slot:null,address:"",notes:"",promo:customerId?"":promoSaved(),customer:customerId||null};
+  if(!S.book||S.book.customer!==customerId)S.book={svc:null,date:null,slot:null,address:"",notes:"",promo:customerId?"":promoSaved(),customer:customerId||null,pay:customerId?"day":"now"};
   return S.book;
 }
 function bookableDays(adminMode){
@@ -465,14 +521,30 @@ function bookableDays(adminMode){
   return out;
 }
 function slotFree(d,s,svc,ts){const weeks=svc&&svc.kind==="monthly"?4:1;for(let i=0;i<weeks;i++)if(ts.has(addD(d,7*i)+" "+s))return false;return true}
+function payChoice(b,svc,cust,est,adminMode){
+  if(!svc)return"";
+  if(adminMode)return `<div class="card"><span class="eyebrow">4 · Payment</span><p class="small">Booked by you: the customer pays on the day${+cust.credit>0?` (their R${(+cust.credit).toFixed(2)} credit is used first)`:""}, or pays by card in their app.</p></div>`;
+  if(svc.custom)return `<div class="card"><span class="eyebrow">4 · Payment</span><p class="small">We'll agree the price with you first. Then you can pay ${cardsOn()?`in the app${payRequired()?"":" or on the day"}`:"on the day"}.</p></div>`;
+  if(est&&est.payable<=0)return `<div class="card"><span class="eyebrow">4 · Payment</span><p class="small okmsg">Nothing to pay: ${est.total===0?"this wash is free":"your credit covers it"}.</p></div>`;
+  if(!cardsOn())return `<div class="card"><span class="eyebrow">4 · Payment</span><p class="small">Pay on the day, by cash or card when we arrive.</p></div>`;
+  const req=payRequired();
+  return `<div class="card"><span class="eyebrow">4 · How would you like to pay?</span>
+    <div class="chips" role="radiogroup" aria-label="Payment">
+      <button type="button" class="chip" data-pay="now" aria-pressed="${b.pay==="now"}">Pay now by card<small>Secure Yoco payment page</small></button>
+      <button type="button" class="chip" data-pay="day" aria-pressed="${b.pay==="day"}">Pay on the day<small>${req?"Only with an event code":"Cash or card when we arrive"}</small></button>
+    </div>
+    ${b.pay==="now"?`<p class="tiny muted">You'll go to Yoco's secure page to pay. Your booking is held for ${holdMins()} minutes while you pay. Cancel by the day before and you're refunded.</p>`:req?`<p class="tiny muted">Card payment is needed to book, except at our special events: enter your event code above.</p>`:""}
+  </div>`;
+}
 function estimate(b,svc,cust){
   if(!svc)return null;const ex=extraFor(cust.car_size),list=S.bookings.filter(x=>x.customer_id===cust.id&&x.status!=="cancelled");
-  if(svc.custom)return {each:null,total:null,text:`Price to confirm (R${(+svc.price).toFixed(0)}–R${(+svc.price_max).toFixed(0)} for the month). We'll agree it with you.`};
-  if(svc.kind==="monthly"){const tot=+svc.price+4*ex;return {total:tot,text:`${R(tot)} for 4 washes${ex?` (includes +R${ex} per wash for ${SIZES[cust.car_size].toLowerCase()})`:""}`}}
+  const withCredit=e=>{const c=Math.min(+cust.credit||0,e.total||0);return Object.assign(e,{credit:c,payable:e.total==null?null:+((e.total-c).toFixed(2))})};
+  if(svc.custom)return {each:null,total:null,payable:null,credit:0,text:`Price to confirm (R${(+svc.price).toFixed(0)}–R${(+svc.price_max).toFixed(0)} for the month). We'll agree it with you.`};
+  if(svc.kind==="monthly"){const tot=+svc.price+4*ex;return withCredit({total:tot,text:`${R(tot)} for 4 washes${ex?` (includes +R${ex} per wash for ${SIZES[cust.car_size].toLowerCase()})`:""}`})}
   const base=+svc.price+ex,st=stampInfo(list);
-  if(st.every&&st.inCard===st.every-1)return {total:0,text:`Free! This is your ${st.every}th once-off wash.`};
-  if(b.promo&&!list.length)return {total:base,text:`${R(base)}${ex?` (includes +R${ex} for ${SIZES[cust.car_size].toLowerCase()})`:""}. Code ${esc(b.promo)}: discount applied when you confirm.`};
-  return {total:base,text:`${R(base)}${ex?` (includes +R${ex} for ${SIZES[cust.car_size].toLowerCase()})`:""}`};
+  if(st.every&&st.inCard===st.every-1)return withCredit({total:0,text:`Free! This is your ${st.every}th once-off wash.`});
+  if(b.promo&&!list.length)return withCredit({total:base,text:`${R(base)}${ex?` (includes +R${ex} for ${SIZES[cust.car_size].toLowerCase()})`:""}. Code ${esc(b.promo)}: any discount is applied when you confirm.`});
+  return withCredit({total:base,text:`${R(base)}${ex?` (includes +R${ex} for ${SIZES[cust.car_size].toLowerCase()})`:""}`});
 }
 VIEWS.book=(arg)=>{
   if(!api)return notConnected();
@@ -497,10 +569,11 @@ VIEWS.book=(arg)=>{
       <label>Notes for us (optional)<input name="notes" value="${esc(b.notes)}" placeholder="Gate code, where the tap is…"></label>
       ${!svc||svc.kind==="once"?`<label>Promo code (optional)<input name="promo" value="${esc(b.promo)}" placeholder="e.g. FUELFRIEND10" autocapitalize="characters"></label>`:""}</div>
     </div>
-    <div class="summary">${svc&&b.date&&b.slot?`<b>${esc(svc.name)} · ${fmtD(b.date,{weekday:"long",day:"numeric",month:"long"})} at ${b.slot}</b><span>${est.text}</span>`:`<span>Choose a service, day and time.</span>`}
-      <span class="small" style="opacity:.85">Nothing is charged in the app. ${svc&&svc.kind==="monthly"?"This package is 4 washes this month and doesn't renew by itself.":"You pay for this wash only."}</span></div>
+    ${payChoice(b,svc,cust,est,adminMode)}
+    <div class="summary">${svc&&b.date&&b.slot?`<b>${esc(svc.name)} · ${fmtD(b.date,{weekday:"long",day:"numeric",month:"long"})} at ${b.slot}</b><span>${est.text}</span>${est.credit?`<span>R${est.credit.toFixed(2)} of your credit is used first.</span>`:""}`:`<span>Choose a service, day and time.</span>`}
+      <span class="small" style="opacity:.85">${svc&&svc.kind==="monthly"?"This package is 4 washes this month and doesn't renew by itself.":"You pay for this wash only."} No subscription, no hidden fees.</span></div>
     <p class="err" id="bkErr" role="alert" hidden></p>
-    <div class="row"><button class="btn" type="submit" ${svc&&b.date&&b.slot?"":"disabled"}>Confirm booking</button></div>
+    <div class="row"><button class="btn" type="submit" ${svc&&b.date&&b.slot?"":"disabled"}>${!adminMode&&cardsOn()&&b.pay==="now"&&est&&est.payable>0?"Book and pay by card":"Confirm booking"}</button></div>
     <div class="card"><h3>Good to know</h3>${RULES}</div>
   </form>`;
 };
@@ -511,15 +584,22 @@ AFTER.book=(arg)=>{
     find.oninput=draw;draw();find.focus();return}
   const f=$("#fBook");if(!f)return;const b=S.book;
   const keep=()=>{const v=Object.fromEntries(new FormData(f));b.address=v.address??b.address;b.notes=v.notes??b.notes;if("promo" in v)b.promo=String(v.promo).toUpperCase().trim()};
-  f.onclick=e=>{const t=e.target.closest("[data-svc],[data-day],[data-slot],[data-act]");if(!t)return;keep();
-    if(t.dataset.svc){b.svc=+t.dataset.svc;b.slot=null}else if(t.dataset.day){b.date=t.dataset.day;b.slot=null}else if(t.dataset.slot)b.slot=t.dataset.slot;
+  f.onclick=e=>{const t=e.target.closest("[data-svc],[data-day],[data-slot],[data-act],[data-pay]");if(!t)return;keep();
+    if(t.dataset.pay)b.pay=t.dataset.pay;
+    else if(t.dataset.svc){b.svc=+t.dataset.svc;b.slot=null}else if(t.dataset.day){b.date=t.dataset.day;b.slot=null}else if(t.dataset.slot)b.slot=t.dataset.slot;
     else if(t.dataset.act==="bkOther"){S.book=null;go("book");return}
     const y=window.scrollY;render();window.scrollTo(0,y)};
   f.onsubmit=async e=>{e.preventDefault();keep();const er=$("#bkErr"),btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Booking…";
-    try{const rows=await api.book({service:b.svc,date:b.date,slot:b.slot,address:b.address,notes:b.notes,promo:b.promo,customer:isAdmin()?b.customer:null});
+    try{const payNow=!isAdmin()&&b.pay==="now"&&cardsOn();
+      const rows=await api.book({service:b.svc,date:b.date,slot:b.slot,address:b.address,notes:b.notes,promo:b.promo,customer:isAdmin()?b.customer:null,pay:payNow?"now":"day"});
       const first=rows[0];try{sessionStorage.removeItem("washlys-promo")}catch(x){}
+      const pending=rows.filter(r=>r.pay_status==="pending").map(r=>r.id);
+      if(pending.length){btn.textContent="Opening secure card payment…";S.book=null;
+        try{const r=await api.payNow(pending);location.href=r.redirectUrl;return}
+        catch(x){await Promise.all([loadMe(),loadTaken()]);S.done=`Your booking is held until ${holdUntil(rows.find(r=>r.pay_status==="pending")||{})}, but the card payment didn't open: ${x.message}`;go("washes");return}}
       const tot=rows.every(r=>r.price!=null)?rows.reduce((a,r)=>a+ +r.price,0):null;
-      S.done=`Booked: ${first.service_name}, ${fmtD(first.date,{weekday:"long",day:"numeric",month:"long"})} at ${first.slot}${rows.length>1?` (and the next 3 weeks)`:""}. ${tot==null?"We'll confirm the price with you.":tot===0?"This one's free!":"Total "+R(tot)+"."}`;
+      const paid=rows.every(r=>r.pay_status==="paid");
+      S.done=`Booked: ${first.service_name}, ${fmtD(first.date,{weekday:"long",day:"numeric",month:"long"})} at ${first.slot}${rows.length>1?` (and the next 3 weeks)`:""}. ${tot==null?"We'll confirm the price with you.":tot===0?"This one's free!":paid?"Paid with your credit.":"Total "+R(tot)+(isAdmin()?".":", paid on the day.")}`;
       const who=b.customer;S.book=null;await Promise.all([loadMe(),loadTaken()]);
       if(isAdmin()){toast(S.done);S.done=null;go("customer/"+who)}else go("home");
     }catch(x){er.textContent=x.message;er.hidden=false;btn.disabled=false;btn.textContent="Confirm booking";await loadTaken();}};
@@ -529,17 +609,56 @@ AFTER.book=(arg)=>{
 VIEWS.washes=()=>{
   const t=todayISO(),mine=myBookings(),up=mine.filter(b=>b.status==="booked"&&b.date>=t),past=mine.filter(b=>!(b.status==="booked"&&b.date>=t)).reverse();
   return `<div class="stack"><div class="between"><h1>My washes</h1><a class="btn sm" href="#/book">Book a wash</a></div>
+    ${S.done?`<div class="card" style="border-color:var(--sun)"><b>${esc(S.done)}</b></div>`:""}${creditNote()}
     <p class="small muted">Move or cancel a wash up to the day before. On the day itself, please contact us: a missed wash is forfeited.</p>
     <h2>Coming up</h2><div class="stack" style="gap:10px" id="bkList">${up.map(b=>bookingCard(b)).join("")||`<p class="muted">Nothing booked.</p>`}</div>
     ${past.length?`<h2>Past and cancelled</h2><div class="stack" style="gap:10px">${past.slice(0,30).map(b=>bookingCard(b)).join("")}</div>`:""}
     <div class="card"><h3>Need help?</h3>${contactRow()}</div></div>`;
 };
+AFTER.washes=()=>{S.done=null};
+const creditNote=()=>S.me&&+S.me.credit>0?`<div class="free"><b>You have R${(+S.me.credit).toFixed(2)} credit.</b> It's used automatically on your next booking.</div>`:"";
+
+/* ---------- back from Yoco's payment page ---------- */
+VIEWS.paid=(arg)=>{const [id,how]=String(arg||"").split("/");
+  if(how)return `<div class="center stack"><h1>Payment not completed</h1><div class="card" id="paidBox"><p>${how==="failed"?"The card payment didn't go through. Nothing was charged.":"You left the payment page, so nothing was charged."}</p><p class="small muted">Loading your booking…</p></div></div>`;
+  return `<div class="center stack"><h1>Confirming your payment…</h1><div class="card" id="paidBox"><p>Yoco is confirming your payment. This usually takes a few seconds.</p></div></div>`};
+AFTER.paid=async(arg)=>{const [id,how]=String(arg||"").split("/");const box=$("#paidBox");if(!box)return;
+  if(how){let pay=null;try{pay=await api.payment(id)}catch(e){}await loadMe();const L=S.bookings.filter(x=>pay&&pay.booking_ids.includes(x.id)&&x.status==="booked"&&["pending","unpaid"].includes(x.pay_status));
+    if(!L.length){box.innerHTML=`<p>${how==="failed"?"The card payment didn't go through.":"You left the payment page."} Nothing was charged.</p><a class="btn" href="#/washes">My washes</a>`;return}
+    const later=!payRequired()||L.every(x=>x.pay_later_ok),held=L.find(x=>x.pay_status==="pending");/* settings may have changed */
+    box.innerHTML=`<p>${how==="failed"?"The card payment didn't go through.":"You left the payment page."} Nothing was charged.</p>${held?`<p class="small">Your booking is held until <b>${holdUntil(held)}</b>.</p>`:""}
+      <div class="row"><button class="btn" id="retry">Try paying again</button>${later?`<button class="btn ghost" id="later">Pay on the day instead</button>`:""}</div>`;
+    $("#retry").onclick=e=>startCardPayment(L.map(x=>x.id),e.target);
+    if(later)$("#later").onclick=async()=>{try{await api.payLater(L.map(x=>x.id));await loadMe();S.done="OK, you'll pay on the day.";go("washes")}catch(x){toast(x.message)}};
+    return}
+  for(let i=0;i<25;i++){let pay=null;try{pay=await api.payment(id)}catch(e){}
+    if(!$("#paidBox"))return;
+    if(pay&&pay.status==="succeeded"){await Promise.all([loadMe(),loadTaken()]);const L=S.bookings.filter(x=>pay.booking_ids.includes(x.id));
+      $("#view").innerHTML=`<div class="center stack"><h1>Paid. Thank you!</h1><div class="card" style="border-color:var(--ok)"><p class="okmsg">R${(+pay.amount).toFixed(2)} paid by card.</p>${L.map(x=>`<div>${esc(x.service_name)} · ${fmtD(x.date,{weekday:"long",day:"numeric",month:"long"})} at ${esc(x.slot)}${x.status!=="booked"?` <span class="small muted">(no longer booked: the amount was added to your credit)</span>`:""}</div>`).join("")}<p class="small muted">Yoco emails your receipt. See you then!</p><div class="row"><a class="btn" href="#/washes">My washes</a><a class="btn ghost" href="#/home">Home</a></div></div></div>`;return}
+    if(pay&&pay.status==="failed"){box.innerHTML=`<p>The payment didn't go through. Nothing was charged.</p><a class="btn" href="#/washes">My washes</a>`;return}
+    await new Promise(r=>setTimeout(r,1600))}
+  box.innerHTML=`<p>We're still waiting for Yoco to confirm. If you paid, your booking will show as <b>Paid</b> under My washes shortly. You won't be charged twice.</p><a class="btn" href="#/washes">My washes</a>`};
 async function bookingAction(e){
   const btn=e.target.closest("[data-act]");if(!btn)return;const card=btn.closest("[data-bk]");if(!card)return;
   const id=+card.dataset.bk,b=S.bookings.find(x=>x.id===id);if(!b)return;const act=btn.dataset.act;
   try{
-    if(act==="cancel"){if(btn.dataset.sure!=="1"){btn.dataset.sure="1";btn.textContent="Tap again to cancel";return}await api.cancel(id);toast("Wash cancelled")}
+    if(act==="cancel"){const m=card.querySelector(".mover"),money=+b.paid_amount||0,cred=+b.credit_used||0,mine=!isAdmin();
+      m.innerHTML=`<div class="free" style="border-color:var(--sun)"><b>${mine?"Would you like to move this wash to another day instead?":"Move this wash instead of cancelling?"}</b>
+        ${money>0?`<p class="small">If ${mine?"you cancel":"it's cancelled"}, the R${money.toFixed(2)} ${mine?"you":"they"} paid is refunded${b.pay_method==="card online"?" to the card":""}.</p>`:""}${cred>0?`<p class="small">R${cred.toFixed(2)} goes back to ${mine?"your":"their"} account credit.</p>`:""}
+        <div class="row" style="margin-top:8px"><button class="btn sm" data-act="move">Yes, move it</button><button class="btn sm warn" data-act="cancelConfirm">No, cancel${money>0?" and refund":""}</button><button class="btn sm ghost" data-act="closeMove">Keep it</button></div></div>`;return}
+    else if(act==="cancelConfirm"){btn.disabled=true;btn.textContent="Cancelling…";
+      if(+b.paid_amount>0&&b.pay_method==="card online"){const r=await api.fn({action:"cancel",booking_id:id});
+        toast(r.refund==="refunding"?`Cancelled. R${(+r.amount).toFixed(2)} is on its way back to the card. Banks usually take a few working days.`:r.refund==="due"?`Cancelled. The refund of R${(+r.amount).toFixed(2)} is noted: Washly's will pay it back.`:"Wash cancelled")}
+      else{const c=await api.cancel(id);toast(c&&c.pay_status==="refund_due"?`Cancelled. The refund of R${(+c.refund_due).toFixed(2)} is noted: Washly's will pay it back.`:+(c&&c.credited)>0?`Cancelled. R${(+c.credited).toFixed(2)} is back in the account credit.`:"Wash cancelled")}}
+    else if(act==="markRefunded"){if(btn.dataset.sure!=="1"){btn.dataset.sure="1";btn.textContent=`Tap again: I've paid back R${(+b.refund_due).toFixed(2)}`;return}
+      await api.updateBooking(id,{pay_status:"refunded",refund_due:0});toast("Marked as refunded")}
     else if(act==="status"){await api.updateBooking(id,{status:btn.dataset.st});toast("Marked "+STATUS[btn.dataset.st].toLowerCase())}
+    else if(act==="payNow"){await startCardPayment(payGroup(b).map(x=>x.id),btn);return}
+    else if(act==="payLater"){await api.payLater(payGroup(b).map(x=>x.id));toast("OK, you'll pay on the day")}
+    else if(act==="paidDay"){await api.updateBooking(id,{pay_status:"paid",pay_method:"on the day",paid_amount:+(+b.paid_amount+due(b)).toFixed(2),pending_since:null});toast("Marked as paid")}
+    else if(act==="refund"){const pay=S.payments.find(x=>x.id===b.payment_id);const n=pay?pay.booking_ids.length:1;
+      if(btn.dataset.sure!=="1"){btn.dataset.sure="1";btn.textContent=`Tap again: refund R${pay?(+pay.amount).toFixed(2):""} to the card${n>1?` (all ${n} washes in that payment)`:""}`;return}
+      btn.disabled=true;const r=await api.refund(b.payment_id);toast(r.status==="succeeded"?"Refunded":"Refund sent to Yoco. It shows here once Yoco confirms.")}
     else if(act==="price"){const m=card.querySelector(".mover");m.innerHTML=`<div class="row"><label style="flex:1">Price (R)<input type="number" min="0" step="0.01" value="${b.price??""}" data-in="price"></label><button class="btn sm" data-act="savePrice">Save</button></div>`;return}
     else if(act==="savePrice"){const v=card.querySelector("[data-in=price]").value;await api.updateBooking(id,{price:v===""?null:+v});toast("Price saved")}
     else if(act==="move"){await loadTaken();const ts=takenSet(),days=bookableDays(isAdmin()).concat(isAdmin()?[]:[]);const m=card.querySelector(".mover");
@@ -559,6 +678,7 @@ async function logout(){await api.signOut();S.session=null;S.me=null;S.bookings=
 /* ---------- account ---------- */
 VIEWS.account=()=>{const m=S.me;return `<div class="stack"><div><span class="eyebrow">Account ${esc(m.account_no||"")}</span><h1>Your account</h1></div>
   ${freeNote()}
+  ${+m.credit>0?`<div class="card"><h2>Credit: R${(+m.credit).toFixed(2)}</h2><p class="small muted">It's used automatically on your next booking.</p></div>`:""}
   <form class="card" id="fAcct" novalidate><h2>Your details</h2><div class="grid">
     <label>Full name<input name="name" value="${esc(m.name)}"></label><label>Cell number<input name="cell" type="tel" value="${esc(m.cell)}"></label>
     <label>Street address<input name="address" value="${esc(m.address)}"></label><label>Suburb<input name="suburb" value="${esc(m.suburb)}"></label>
@@ -584,7 +704,7 @@ VIEWS.today=()=>{
   const t=todayISO(),all=S.bookings,f=S.adminFilter;
   const monthStart=t.slice(0,8)+"01",weekEnd=addD(t,7);
   const doneMonth=all.filter(b=>b.status==="done"&&b.date>=monthStart),rev=doneMonth.reduce((a,b)=>a+(+b.price||0),0);
-  const sel=all.filter(b=>f==="today"?b.date===t:f==="upcoming"?b.date>=t&&b.status==="booked":f==="past"?b.date<t:f==="toconfirm"?b.price==null&&b.status!=="cancelled":true);
+  const sel=all.filter(b=>f==="today"?b.date===t:f==="upcoming"?b.date>=t&&b.status==="booked":f==="past"?b.date<t:f==="toconfirm"?b.price==null&&b.status!=="cancelled":f==="unpaid"?b.status==="booked"&&["unpaid","pending"].includes(b.pay_status):f==="refunds"?b.pay_status==="refund_due":true);
   const ordered=f==="past"?sel.slice().reverse():sel;
   const byDay={};ordered.forEach(b=>(byDay[b.date]??=[]).push(b));
   return `<div class="stack"><div class="between"><h1>Bookings</h1><button class="btn sm ghost" data-act="refresh">Refresh</button></div>
@@ -592,10 +712,13 @@ VIEWS.today=()=>{
       <div class="stat"><b>${all.filter(b=>b.date===t&&b.status==="booked").length}</b><span>washes today</span></div>
       <div class="stat"><b>${all.filter(b=>b.date>=t&&b.date<=weekEnd&&b.status==="booked").length}</b><span>booked, next 7 days</span></div>
       <div class="stat"><b>R${rev.toFixed(0)}</b><span>earned this month (done)</span></div>
+      <div class="stat"><b>R${S.payments.filter(x=>x.status==="succeeded"&&String(x.created_at).slice(0,7)===t.slice(0,7)).reduce((a,x)=>a+ +x.amount,0).toFixed(0)}</b><span>paid by card this month</span></div>
+      <div class="stat"><b>${all.filter(b=>b.status==="booked"&&b.date>=t&&b.pay_status==="unpaid"&&b.price!=null).length}</b><span>upcoming, to collect on the day</span></div>
+      ${all.some(b=>b.pay_status==="refund_due")?`<div class="stat" style="border-color:var(--sun)"><b>R${all.filter(b=>b.pay_status==="refund_due").reduce((a,b)=>a+ +b.refund_due,0).toFixed(0)}</b><span>refunds due (${all.filter(b=>b.pay_status==="refund_due").length})</span></div>`:""}
       <div class="stat"><b>${S.profiles.filter(p=>!p.is_admin&&String(p.created_at).slice(0,7)===t.slice(0,7)).length}</b><span>new accounts this month</span></div>
       <div class="stat"><b>${all.filter(b=>b.promo==="FUELFRIEND10").length}</b><span>FUELFRIEND10 bookings</span></div>
     </div>
-    <div class="chips" role="group" aria-label="Show">${[["upcoming","Upcoming"],["today","Today"],["toconfirm","Price to confirm"],["past","Past"],["all","All"]].map(([k,l])=>`<button class="chip" data-filter="${k}" aria-pressed="${f===k}">${l}</button>`).join("")}</div>
+    <div class="chips" role="group" aria-label="Show">${[["upcoming","Upcoming"],["today","Today"],["toconfirm","Price to confirm"],["unpaid","Not paid yet"],["refunds","Refunds due"],["past","Past"],["all","All"]].map(([k,l])=>`<button class="chip" data-filter="${k}" aria-pressed="${f===k}">${l}</button>`).join("")}</div>
     ${Object.keys(byDay).length?Object.entries(byDay).map(([d,L])=>`<div class="dayh">${d===t?"Today · ":""}${fmtD(d,{weekday:"long",day:"numeric",month:"long"})}</div><div class="stack" style="gap:10px">${L.map(b=>bookingCard(b,{admin:true,noDate:true})).join("")}</div>`).join(""):`<p class="muted">No bookings here.</p>`}
   </div>`;
 };
@@ -615,6 +738,8 @@ VIEWS.customer=(id)=>{
   return `<div class="stack"><a href="#/customers" class="small">← All customers</a>
     <div class="between"><div><span class="eyebrow">Free account ${esc(p.account_no)} · joined ${fmtD(String(p.created_at).slice(0,10),{day:"numeric",month:"short",year:"numeric"})} via ${esc(p.source)}</span><h1>${esc(p.name)}</h1></div><a class="btn" href="#/book/${esc(p.id)}">Book for ${esc(p.name.split(" ")[0])}</a></div>
     <div class="stats"><div class="stat"><b>${done.length}</b><span>washes done</span></div><div class="stat"><b>R${spent.toFixed(0)}</b><span>total spent</span></div><div class="stat"><b>${done.length?fmtD(done[done.length-1].date,{day:"numeric",month:"short"}):"–"}</b><span>last wash</span></div>${st.every?`<div class="stat"><b>${st.inCard}/${st.every-1}</b><span>stamps to a free wash</span></div>`:""}</div>
+    <form class="card" id="fCredit" novalidate><div class="between"><h2>Credit: R${(+p.credit||0).toFixed(2)}</h2><span class="small muted">Used automatically on their next booking</span></div>
+      <div class="row"><label style="flex:1">Set credit to (R)<input name="credit" type="number" min="0" step="0.01" value="${(+p.credit||0).toFixed(2)}"></label><button class="btn sm ghost" type="submit">Save credit</button></div><p id="crMsg" role="status"></p></form>
     <div class="row small">${p.cell?`<a href="tel:${esc(p.cell.replace(/\s/g,""))}">Call ${esc(p.cell)}</a> · <a href="${waLink(p.cell)}" target="_blank" rel="noopener">WhatsApp</a> · `:""}<a href="mailto:${esc(p.email)}">${esc(p.email)}</a></div>
     <form class="card" id="fCust" novalidate><h2>Details</h2><div class="grid">
       ${["name","cell","address","suburb","car","reg"].map(k=>`<label>${{name:"Name",cell:"Cell",address:"Address",suburb:"Suburb",car:"Car",reg:"Registration"}[k]}<input name="${k}" value="${esc(p[k])}"></label>`).join("")}
@@ -622,7 +747,10 @@ VIEWS.customer=(id)=>{
       <p id="cMsg" role="status"></p><button class="btn ghost" type="submit">Save details</button></form>
     <h2>Bookings</h2><div class="stack" style="gap:10px">${bs.slice().sort((a,b)=>(b.date+b.slot).localeCompare(a.date+a.slot)).map(b=>bookingCard(b,{admin:true})).join("")||`<p class="muted">No bookings yet.</p>`}</div></div>`;
 };
-AFTER.customer=(id)=>{const f=$("#fCust");if(!f)return;f.onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(f)),m=$("#cMsg");
+AFTER.customer=(id)=>{const fc=$("#fCredit");if(fc)fc.onsubmit=async e=>{e.preventDefault();const v=+new FormData(fc).get("credit"),m=$("#crMsg");
+    if(!(v>=0)){m.className="err";m.textContent="Enter an amount of R0 or more.";return}
+    try{const u=await api.setCredit(id,v);S.profiles=S.profiles.map(x=>x.id===id?u:x);m.className="okmsg";m.textContent="Credit saved.";setTimeout(render,700)}catch(x){m.className="err";m.textContent=x.message}};
+  const f=$("#fCust");if(!f)return;f.onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(f)),m=$("#cMsg");
   try{v.reg=String(v.reg).toUpperCase();const u=await api.updateProfile(id,v);S.profiles=S.profiles.map(x=>x.id===id?u:x);m.className="okmsg";m.textContent="Saved."}catch(x){m.className="err";m.textContent=x.message}}};
 
 VIEWS.services=()=>`<div class="stack"><h1>Services and prices</h1><p class="muted">Changes show in the app straight away. Turning a service off hides it from customers; existing bookings keep their price.</p>
@@ -657,8 +785,40 @@ VIEWS.settings=()=>{const st=setts();return `<div class="stack"><h1>Settings</h1
     <div class="grid"><label>Extra for a 7-seater / SUV (R per wash)<input name="suv" type="number" min="0" step="1" value="${(st.size_extra||{}).suv||0}"></label>
     <label>Extra for a minibus / taxi (R per wash)<input name="minibus" type="number" min="0" step="1" value="${(st.size_extra||{}).minibus||0}"></label></div>
     <p id="setMsg" role="status"></p><button class="btn" type="submit">Save settings</button></form>
+  <form class="card" id="fPay" novalidate><h2>Payments</h2>
+    <div id="yocoBox" class="free" style="border-color:var(--line)">Checking the Yoco connection…</div>
+    <div class="chips" role="radiogroup" aria-label="When customers pay">
+      <label class="chip" style="flex-direction:row;gap:6px;color:var(--ink)"><input type="radio" name="pay_mode" value="optional" ${st.pay_mode!=="required"?"checked":""} style="width:auto">Customers choose: pay now or on the day</label>
+      <label class="chip" style="flex-direction:row;gap:6px;color:var(--ink)"><input type="radio" name="pay_mode" value="required" ${st.pay_mode==="required"?"checked":""} style="width:auto">Pay now only (except event codes)</label></div>
+    <label>How long an unpaid "pay now" booking holds its time (minutes)<input name="pay_hold_minutes" type="number" min="10" max="120" value="${st.pay_hold_minutes||30}"></label>
+    <p class="small muted">When a customer cancels, the app first offers to move the wash. If they still cancel, a card payment that covers only that wash is refunded automatically. Otherwise (one wash from a package paid in one go, or a test payment) it shows under <b>Refunds due</b> for you to pay back and tick off.</p>
+    <p id="payMsg" role="status"></p><button class="btn" type="submit">Save payment settings</button></form>
+  <div class="card"><h2>Promo and event codes</h2><p class="small muted">A discount code takes a % off. An event code (for activation events) lets customers pay on the day even when card payment is required. A code can do both.</p>
+    <div id="promoList" class="stack" style="gap:10px"><p class="muted small">Loading…</p></div></div>
   <div class="card"><h2>Your admin account</h2><p class="small">${esc(S.me.name)} · ${esc(S.me.email)}</p><div class="row"><a class="btn ghost sm" href="#/account">Change my password</a><button class="btn ghost sm" data-act="logout">Log out</button></div></div></div>`};
-AFTER.settings=()=>{$("#fSet").onsubmit=async e=>{e.preventDefault();const f=e.target,m=$("#setMsg"),fd=new FormData(f);
+function promoForm(p,isNew){return `<form class="bk" data-promo="${isNew?"":esc(p.code)}" novalidate><div class="grid">
+  <label>Code<input name="code" value="${esc(p.code)}" ${isNew?"":"readonly"} autocapitalize="characters" placeholder="e.g. EVENTDAY"></label>
+  <label>% off (0 = no discount)<input name="pct" type="number" min="0" max="100" value="${p.pct}"></label>
+  <label>Description<input name="label" value="${esc(p.label)}"></label></div>
+  <div class="chips">${[["first_only","First booking only"],["once_only","Discount on once-off washes only"],["pay_later","Event code: may pay on the day"],["active","Active"]].map(([k,l])=>`<label class="chip" style="flex-direction:row;gap:6px;color:var(--ink)"><input type="checkbox" name="${k}" ${p[k]?"checked":""} style="width:auto">${l}</label>`).join("")}</div>
+  <div class="row"><button class="btn sm" type="submit">${isNew?"Add code":"Save"}</button><span class="small" data-msg></span></div></form>`}
+async function drawPromos(){const box=$("#promoList");if(!box)return;try{S.promos=await api.promos()||[]}catch(e){box.innerHTML=`<p class="err">${esc(e.message)}</p>`;return}
+  box.innerHTML=S.promos.map(p=>promoForm(p,false)).join("")+`<details><summary class="small" style="cursor:pointer;font-weight:700">Add a code</summary>${promoForm({code:"",pct:0,label:"",first_only:false,once_only:true,pay_later:true,active:true},true)}</details>`;
+  box.querySelectorAll("[data-promo]").forEach(f=>f.onsubmit=async e=>{e.preventDefault();const fd=new FormData(f),m=f.querySelector("[data-msg]"),isNew=!f.dataset.promo;
+    const p={code:String(fd.get("code")).toUpperCase().replace(/[^A-Z0-9]/g,""),pct:Math.max(0,Math.min(100,+fd.get("pct")||0)),label:String(fd.get("label")||"").trim(),first_only:fd.has("first_only"),once_only:fd.has("once_only"),pay_later:fd.has("pay_later"),active:fd.has("active")};
+    if(!p.code){m.className="small err";m.textContent="Add a code (letters and numbers).";return}
+    try{await api.savePromo(p,isNew);toast("Saved");drawPromos()}catch(x){m.className="small err";m.textContent=/duplicate|unique/i.test(x.message)?"That code already exists.":x.message}})}
+async function drawYoco(){const box=$("#yocoBox");if(!box)return;let s=null;try{s=await api.yocoStatus()}catch(e){}
+  if(!$("#yocoBox"))return;
+  if(!s){box.innerHTML=`<b>Card payments aren't set up yet.</b> <span class="small">Add the payment function and your Yoco key in Supabase (see the setup steps).</span>`;return}
+  if(!s.connected){box.innerHTML=`<b>Add your Yoco secret key</b> <span class="small">in Supabase → Edge Functions → Secrets (YOCO_SECRET_KEY).</span>`;return}
+  box.innerHTML=s.webhook?`<b class="okmsg">Yoco connected (${s.mode==="live"?"live: real payments":"test mode: no real money"}).</b>${s.mode!=="live"?` <span class="small">Switch to your live key when you're ready.</span>`:""} <button type="button" class="linkbtn small" id="yocoSetup">Reconnect</button>`
+    :`<b>Yoco key found (${s.mode}).</b> One more step: <button type="button" class="btn sm" id="yocoSetup">Connect Yoco</button> <span class="small muted">so Yoco can tell the app when a payment goes through.</span>`;
+  $("#yocoSetup").onclick=async e=>{e.target.disabled=true;try{const r=await api.yocoSetup();toast(`Yoco connected (${r.mode})`);drawYoco()}catch(x){toast(x.message);e.target.disabled=false}}}
+AFTER.settings=()=>{drawYoco();drawPromos();
+  $("#fPay").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target),m=$("#payMsg");
+    try{S.settings=await api.saveSettings({pay_mode:fd.get("pay_mode")==="required"?"required":"optional",pay_hold_minutes:Math.max(10,Math.min(120,+fd.get("pay_hold_minutes")||30))});m.className="okmsg";m.textContent="Saved."}catch(x){m.className="err";m.textContent=x.message}};
+  $("#fSet").onsubmit=async e=>{e.preventDefault();const f=e.target,m=$("#setMsg"),fd=new FormData(f);
   const slots=String(fd.get("slots")).split(/[,\s]+/).map(s=>s.trim()).filter(Boolean).map(s=>/^\d:\d\d$/.test(s)?"0"+s:s);
   if(!slots.length||slots.some(s=>!/^([01]\d|2[0-3]):[0-5]\d$/.test(s))){m.className="err";m.textContent="Write times like 08:00, 10:00, 12:00.";return}
   const days=fd.getAll("day").map(Number);if(!days.length){m.className="err";m.textContent="Pick at least one day.";return}
