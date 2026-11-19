@@ -7,14 +7,14 @@
 <meta name="description" content="Book Washly's mobile car wash in Gqeberha. We come to you. Free account, plus Fuel Friend: when to fill up and the cheapest diesel near you.">
 <meta property="og:title" content="Washly's · We come to you">
 <meta property="og:description" content="Book a car wash at your home or office in Gqeberha, and save on fuel with Fuel Friend.">
-<meta name="theme-color" content="#0F3B50">
+<meta name="theme-color" content="#F1F6F7">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Washly's">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="format-detection" content="telephone=no">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
@@ -275,6 +275,113 @@ body.sheet-open{overflow:hidden}
   .grab{display:none}
 }
 @media (prefers-reduced-motion:reduce){.sheet,.sheet-bg{transition:none!important}}
+/* ===== lighter look (19 Nov): fewer outlines, soft shadows, more space, photos ===== */
+:root{--bg:#F1F6F7;--line:#DDE8EB;--shadow:0 1px 2px rgba(15,59,80,.05),0 6px 20px rgba(15,59,80,.06);--r:22px}
+main{padding:22px 0 48px}
+.stack{gap:20px}
+h1{font-size:clamp(28px,7.4vw,38px);letter-spacing:-.02em}
+h2{font-size:20px;letter-spacing:-.01em}
+.card{border:0;border-radius:var(--r);padding:20px;box-shadow:var(--shadow);gap:14px}
+.btn{border-radius:14px;min-height:48px;padding:12px 20px}
+.btn.ghost{background:var(--teal-l);border:0;color:var(--teal-d)}
+.btn.ghost:hover{background:#CFE7EA}
+.btn.warn{background:#FBECE8;border:0;color:#A63B24}
+.btn.sm{border-radius:11px;min-height:38px;padding:7px 14px}
+input,select,textarea{border-radius:14px;padding:13px 14px;border:1px solid #D2E1E5;background:#fff}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(58,147,160,.18)}
+label{gap:7px}
+.free{border-left:0;border-radius:16px;padding:14px 16px;background:var(--teal-l)}
+.badge{border-radius:8px;padding:3px 8px;font-size:11px}
+.chip{border:0;box-shadow:0 0 0 1px var(--line);background:#fff}
+.stat,.gauge{border:0;box-shadow:var(--shadow);border-radius:18px}
+.gauge.hero2{box-shadow:none}
+.svc .item{border:0;background:var(--bg);border-radius:16px}
+.svc button{border:0;box-shadow:0 0 0 1px var(--line)}
+.eyebrow{font-size:11.5px;letter-spacing:.12em}
+/* header and tab bar */
+.top .wrap{min-height:56px}
+.nav{background:rgba(255,255,255,.9);backdrop-filter:saturate(1.6) blur(16px);-webkit-backdrop-filter:saturate(1.6) blur(16px);border-top:1px solid rgba(15,59,80,.08);padding-top:8px}
+.nav a{background:none!important;gap:4px;font-size:11px}
+.nav a .ni{display:grid;place-items:center;width:56px;height:30px;border-radius:15px;transition:background-color .2s}
+.nav a[aria-current="page"] .ni{background:var(--teal-l)}
+.nav a[aria-current="page"]{color:var(--navy)}
+@media (min-width:760px){.nav{background:var(--navy);backdrop-filter:none;-webkit-backdrop-filter:none;border:0;padding-top:0}.nav a .ni{width:auto;height:auto;background:none!important}.nav a[aria-current="page"]{color:#fff}}
+/* photo hero */
+.hero{min-height:400px;justify-content:flex-end;padding:24px 22px;border-radius:26px;background:linear-gradient(180deg,rgba(15,59,80,.05) 0%,rgba(15,59,80,.55) 42%,rgba(12,48,66,.95) 100%),url(img/hero.webp) center 30%/cover,var(--navy)}
+.hero:after{display:none}
+.hero h1{font-size:clamp(34px,9vw,46px)}
+.hero .btn{min-height:52px;padding:12px 24px}
+.hero .btn.ghost{background:rgba(255,255,255,.14);border:0;color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.sec-h a{font-weight:700;font-size:14px;text-decoration:none}
+.rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 16px;margin:0 -16px;padding:2px 16px 10px;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.tile{flex:none;width:210px;scroll-snap-align:start;background:#fff;border-radius:20px;overflow:hidden;box-shadow:var(--shadow);text-decoration:none;color:inherit;display:flex;flex-direction:column}
+.tile .ph{height:120px;background:var(--teal-l) center/cover}
+.tile .tx{padding:12px 14px 14px;display:flex;flex-direction:column;gap:2px}
+.tile b{font-family:var(--f-head);font-weight:600}
+.tile span{font-size:13.5px;color:var(--muted)}
+.tile .pr{color:var(--teal-d);font-weight:700;font-size:15px;margin-top:4px}
+.pkg{display:flex;gap:14px;align-items:center;text-decoration:none;color:inherit}
+.pkg .ph{width:84px;height:84px;border-radius:16px;flex:none;background:center/cover}
+.steps3{display:grid;gap:14px}
+.steps3 div{display:flex;gap:14px;align-items:flex-start}
+.steps3 .si{width:42px;height:42px;border-radius:14px}
+.steps3 b{display:block}
+.steps3 span.small{color:var(--muted)}
+.welcome{display:flex;gap:12px;align-items:flex-start;background:#FDF3DC;border-radius:20px;padding:16px 18px}
+.welcome svg{width:24px;height:24px;color:#9A6A00;flex:none}
+/* signed-in home */
+.hello small{display:block;color:var(--muted);font-weight:600;font-size:14px}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.quick a{background:#fff;border-radius:18px;box-shadow:var(--shadow);padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;text-decoration:none;color:var(--ink);font-weight:700;font-size:13.5px;text-align:center}
+.quick a .si{width:44px;height:44px;border-radius:14px}
+.quick a.main{background:var(--teal);color:#fff}
+.quick a.main .si{background:rgba(255,255,255,.18);color:#fff}
+.quick a:active{transform:scale(.96)}
+/* booking cards */
+.bk{border:0;border-radius:20px;padding:16px;gap:8px;box-shadow:var(--shadow)}
+.card .bk{box-shadow:none;background:var(--bg)}
+.bk-top{display:flex;gap:12px;align-items:center}
+.dtile{width:52px;height:56px;border-radius:14px;background:var(--navy);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;line-height:1.1}
+.dtile b{font-family:var(--f-head);font-size:20px}
+.dtile small{font-size:11px;font-weight:700;text-transform:uppercase;opacity:.8;letter-spacing:.05em}
+.bk-when{display:flex;flex-direction:column;gap:5px;min-width:0}
+.bk-when .when{font-size:16.5px}
+.bk-when .badges{display:flex;flex-wrap:wrap;gap:4px}
+.bk.done .dtile,.bk.cancelled .dtile,.bk.missed .dtile{background:#C9D6DA}
+/* account header */
+.card.me,.card.pkg{flex-direction:row;align-items:center}
+.me{display:flex;gap:14px;align-items:center}
+.avatar{width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--navy));color:#fff;display:grid;place-items:center;font-family:var(--f-head);font-weight:700;font-size:22px;flex:none}
+.install{border:0;background:linear-gradient(135deg,#E3F2F4,#fff)}
+@media (min-width:760px){.rail{margin:0;padding:2px 0 10px}.quick a{flex-direction:row;justify-content:center}}
+/* ===== top bar and tab bar: light, see-through (20 Nov) ===== */
+/* iPhone apps installed earlier show the clock in white over the page: this strip sits behind it.
+   With the new setting the strip has no height, so nothing shows. */
+body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--navy);z-index:100;pointer-events:none}
+.top{position:sticky;top:0;z-index:30;background:rgba(241,246,247,.8);backdrop-filter:saturate(1.6) blur(16px);-webkit-backdrop-filter:saturate(1.6) blur(16px);color:var(--navy);transition:box-shadow .2s ease,background-color .2s ease}
+.top.scrolled{box-shadow:0 1px 0 rgba(15,59,80,.08),0 6px 18px rgba(15,59,80,.05);background:rgba(255,255,255,.82)}
+.top .wrap{min-height:58px}
+.brand{color:var(--navy);font-size:20px}
+.brand svg{width:30px;height:30px}
+.brand small{color:var(--muted);opacity:1}
+.pill-btn{color:var(--navy);border-color:var(--line);background:rgba(255,255,255,.7)}
+.pill-btn.solid{color:#fff}
+.who{font-size:13px;font-weight:600;color:var(--muted)}
+.avatar-sm{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--navy));color:#fff;display:grid;place-items:center;font-family:var(--f-head);font-weight:700;font-size:14px;text-decoration:none;box-shadow:0 2px 8px rgba(15,59,80,.18)}
+@media (max-width:460px){.topr .pill-btn:not(.solid){display:inline-block}}
+/* tab bar stays at the bottom on every screen size; on wide screens it floats */
+@media (min-width:760px){
+  body{padding-bottom:112px}
+  .nav{position:fixed;left:50%;right:auto;bottom:18px;transform:translateX(-50%);width:min(680px,calc(100% - 32px));justify-content:space-around;gap:0;padding:8px 6px;border-radius:24px;background:rgba(255,255,255,.88);backdrop-filter:saturate(1.6) blur(16px);-webkit-backdrop-filter:saturate(1.6) blur(16px);border:1px solid rgba(15,59,80,.08);box-shadow:0 12px 32px rgba(15,59,80,.14)}
+  .nav a{flex:1;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);padding:2px;border-radius:0;border-bottom:0}
+  .nav a svg{width:22px;height:22px}
+  .nav a .ni{width:56px;height:30px}
+  .nav a[aria-current="page"]{color:var(--navy)}
+  .nav a[aria-current="page"] .ni{background:var(--teal-l)!important}
+  .toast{bottom:112px}
+}
 </style>
 </head>
 <body>
@@ -435,9 +542,12 @@ window.addEventListener("hashchange",async()=>{
 
 function renderChrome(view){
   document.body.classList.toggle("flow",view==="book"&&!isAdmin()&&!!api);
-  $("#nav").innerHTML=navItems().map(([k,l,i])=>`<a href="#/${k}" ${k===view||(k==="customers"&&view==="customer")?'aria-current="page"':""}>${ico(i)}<span>${l}</span></a>`).join("");
-  $("#topr").innerHTML=S.me?`<span class="small" style="opacity:.8">${esc(S.me.name.split(" ")[0]||"")}${isAdmin()?" · admin":""}</span>${isAdmin()?`<button class="pill-btn" data-act="logout">Log out</button>`:""}`
-    :`<a class="pill-btn" href="#/login">Log in</a><a class="pill-btn solid" href="#/signup">Sign up free</a>`;
+  $("#nav").innerHTML=navItems().map(([k,l,i])=>`<a href="#/${k}" ${k===view||(k==="customers"&&view==="customer")?'aria-current="page"':""}><span class="ni">${ico(i)}</span><span>${l}</span></a>`).join("");
+  /* Kept light on purpose: the tab bar already holds the main links. */
+  const ini=S.me?String(S.me.name||"?").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join(""):"";
+  $("#topr").innerHTML=!S.me?""
+    :isAdmin()?`<span class="who">${esc(S.me.name.split(" ")[0]||"")} · admin</span><button class="pill-btn" data-act="logout">Log out</button>`
+    :`<a class="avatar-sm" href="#/account" aria-label="Your account">${esc(ini)}</a>`;
 }
 async function render(){
   const {view,arg}=route();renderChrome(view);const V=$("#view");
@@ -515,8 +625,9 @@ function bookingCard(b,opts={}){
         :b.pay_status==="paid"&&b.pay_method==="card online"&&b.payment_id?`<div class="row"><button class="btn sm warn" data-act="refund">Refund to card</button></div>`:"")
     :b.pay_status==="pending"?`<div class="free" style="border-color:var(--sun)"><b>Finish paying to keep this booking.</b> It's held until ${holdUntil(b)}.<div class="row" style="margin-top:8px"><button class="btn sm" data-act="payNow">Pay now by card${grp.length>1?` (${grp.length} washes)`:""}</button>${!payRequired()||b.pay_later_ok?`<button class="btn sm ghost" data-act="payLater">Pay on the day instead</button>`:""}</div></div>`
     :b.pay_status==="unpaid"&&owe>=2&&cardsOn()?`<div class="row"><button class="btn sm" data-act="payNow">Pay now by card (R${(grp.length>1?grp.reduce((a,x)=>a+due(x),0):owe).toFixed(2)}${grp.length>1?` for ${grp.length} washes`:""})</button></div>`:"";
-  return `<div class="bk" data-bk="${b.id}">
-    <div class="between"><span class="when">${opts.noDate?"":fmtD(b.date)+" · "}${esc(b.slot)}</span><span>${badges}</span></div>
+  return `<div class="bk ${b.status}" data-bk="${b.id}">
+    <div class="bk-top">${opts.noDate?"":`<span class="dtile" aria-hidden="true"><b>${fmtD(b.date,{day:"numeric"})}</b><small>${fmtD(b.date,{month:"short"})}</small></span>`}
+      <span class="bk-when"><span class="when">${opts.noDate?"":fmtD(b.date)+" · "}${esc(b.slot)}</span><span class="badges">${badges}</span></span></div>
     ${opts.admin?`<div><a href="#/customer/${esc(b.customer_id)}"><b>${esc(c.name)}</b></a> <span class="tiny muted">${esc(c.account_no||"")}</span></div>`:""}
     <div>${esc(b.service_name)} · ${SIZES[b.car_size]||""} · ${price}</div>
     ${opts.admin?`<div class="small muted">${esc([c.car,c.reg].filter(Boolean).join(" · "))}</div>`:""}
@@ -533,30 +644,42 @@ function bookingCard(b,opts={}){
 /* ================= views ================= */
 const VIEWS={},AFTER={};
 
+const PHOTO=s=>/inside|vacuum|interior/i.test(s.name)?"img/interior.webp":"img/exterior.webp";
 VIEWS.home=()=>{
-  if(!S.me)return `<div class="stack">
+  if(!S.me){const once=S.services.filter(s=>s.kind==="once"&&s.active),mon=S.services.filter(s=>s.kind==="monthly"&&s.active);
+    const minMon=mon.length?Math.min(...mon.map(s=>+s.price)):null;
+    return `<div class="stack">
     <section class="hero">
-      <span class="eyebrow" style="color:#BFE6EA">Vehicle wash services · ${esc(CT.area||"Gqeberha")}</span>
+      <span class="eyebrow" style="color:#BFE6EA">Mobile car wash · ${esc(CT.area||"Gqeberha")}</span>
       <h1>We come to you.</h1>
       <p>Book a wash at your home or office in a few taps. Exterior washes, tyre polish, vacuuming and interior shine.</p>
-      <ul class="ticks"><li>Exterior wash</li><li>Tyre polish</li><li>Vacuuming</li><li>Interior shine</li></ul>
       <div class="row"><a class="btn" href="#/book">Book a wash</a><a class="btn ghost" href="#/login">Log in</a></div>
       <p class="small" style="opacity:.9">You create a free account as you book. It's not a subscription: you only pay for the washes you book.</p>
     </section>
     ${installCard()}
-    ${FROM_FF||PROMO_IN?`<div class="card" style="border-color:var(--sun)"><b>Welcome from Fuel Friend.</b><p>${PROMO_IN?`Your code <b>${esc(PROMO_IN)}</b> gives you 10% off your first once-off wash. It's filled in for you when you book.`:"Book your first wash: you create a free account as you go."}</p></div>`:""}
+    ${FROM_FF||PROMO_IN?`<div class="welcome">${fi("gift")}<div><b>Welcome from Fuel Friend.</b><p>${PROMO_IN?`Your code <b>${esc(PROMO_IN)}</b> gives you 10% off your first once-off wash. It's filled in for you when you book.`:"Book your first wash: you create a free account as you go."}</p></div></div>`:""}
     ${api?"":notConnected()}
-    <div class="card"><div class="between"><h2>Prices</h2><a href="#/prices" class="small">Full price list</a></div>${serviceList(false)}</div>
+    <section class="stack" style="gap:12px"><div class="sec-h"><h2>Our washes</h2><a href="#/prices">All prices</a></div>
+      <div class="rail">${once.map(s=>`<a class="tile" href="#/book" data-pick="${s.id}"><span class="ph" style="background-image:url(${PHOTO(s)})"></span><span class="tx"><b>${esc(s.name)}</b><span>${esc(s.description)}</span><span class="pr">${priceLabel(s)}</span></span></a>`).join("")}</div>
+      ${minMon!=null?`<a class="card pkg" href="#/prices"><span class="ph" style="background-image:url(img/interior.webp)"></span><span><b>Monthly packages</b><br><span class="small muted">4 washes a month, on the same day and time each week. From R${minMon.toFixed(0)}.</span></span></a>`:""}
+    </section>
+    <div class="card"><h2>How it works</h2><div class="steps3">
+      <div><span class="si">${fi("cal")}</span><span><b>Book in a minute</b><span class="small">Pick a wash, a day and a free time.</span></span></div>
+      <div><span class="si">${fi("pin")}</span><span><b>We come to you</b><span class="small">At home or at the office. We bring everything.</span></span></div>
+      <div><span class="si">${fi("drop")}</span><span><b>Pay your way</b><span class="small">${cardsOn()?"By card in the app, or on the day.":"Cash or card on the day."} No subscription.</span></span></div></div></div>
     ${fuelTeaser()}
     <div class="card"><h2>Contact us</h2>${contactRow()}</div>
-  </div>`;
+  </div>`}
   const mine=myBookings(),t=todayISO(),next=mine.filter(b=>b.status==="booked"&&b.date>=t)[0],st=stampInfo(mine);
+  const hr=+new Intl.DateTimeFormat("en-ZA",{hour:"numeric",hourCycle:"h23",timeZone:TZ}).format(new Date());
   return `<div class="stack">
-    <div><span class="eyebrow">Account ${esc(S.me.account_no||"")}</span><h1>Hi ${esc(S.me.name.split(" ")[0]||"there")}</h1></div>
-    ${S.done?`<div class="card" style="border-color:var(--ok)"><b class="okmsg">${esc(S.done)}</b></div>`:""}
+    <div class="hello"><small>${hr<12?"Good morning":hr<18?"Good afternoon":"Good evening"}</small><h1>${esc(S.me.name.split(" ")[0]||"there")}</h1></div>
+    ${S.done?`<div class="card" style="box-shadow:0 0 0 2px var(--ok)"><b class="okmsg">${esc(S.done)}</b></div>`:""}
     ${creditNote()}
     ${installCard()}
-    <div class="card"><h2>Your next wash</h2>${next?bookingCard(next):`<p class="muted">Nothing booked yet.</p>`}<div class="row"><a class="btn" href="#/book">Book a wash</a>${next?`<a class="btn ghost" href="#/washes">All my washes</a>`:""}</div></div>
+    <div class="quick"><a class="main" href="#/book"><span class="si">${ico("book")}</span>Book a wash</a><a href="#/washes"><span class="si">${ico("list")}</span>My washes</a><a href="#/fuel"><span class="si">${ico("fuel")}</span>Fuel Friend</a></div>
+    <section class="stack" style="gap:10px"><div class="sec-h"><h2>Your next wash</h2>${next?`<a href="#/washes">All washes</a>`:""}</div>
+      ${next?bookingCard(next):`<div class="card"><p class="muted">Nothing booked yet. Pick a wash and a time, and we'll come to you.</p><a class="btn" href="#/book" style="align-self:flex-start">Book a wash</a></div>`}</section>
     ${st.every?`<div class="card"><div class="between"><h2>Loyalty card</h2><span class="small muted">Every ${st.every}th once-off wash is free</span></div>
       <div class="stamps">${Array.from({length:st.every},(_,i)=>`<span class="${i<st.inCard?"on":""} ${i===st.every-1?"gift":""}">${i===st.every-1?"Free":i+1}</span>`).join("")}</div>
       <p class="small muted">${st.inCard===st.every-1?"Your next once-off wash is free!":`${st.every-1-st.inCard} more once-off wash${st.every-1-st.inCard===1?"":"es"} until a free one.`}</p></div>`:""}
@@ -1132,11 +1255,14 @@ async function bookingAction(e){
     await Promise.all([loadMe(),loadTaken()]);const y=window.scrollY;render();window.scrollTo(0,y);
   }catch(x){toast(x.message)}
 }
-document.addEventListener("click",e=>{if(e.target.closest("[data-bk] [data-act]"))bookingAction(e);if(e.target.closest("[data-act=logout]"))logout()});
+document.addEventListener("click",e=>{const pk=e.target.closest("[data-pick]");
+  if(pk&&api&&!isAdmin()){e.preventDefault();const sv=S.services.find(x=>x.id===+pk.dataset.pick);if(sv){flowState();S.book.kind=sv.kind;S.book.svc=sv.id;S.book.slot=null;saveDraft();S.flowPush=0;go("book/when");return}}
+  if(e.target.closest("[data-bk] [data-act]"))bookingAction(e);if(e.target.closest("[data-act=logout]"))logout()});
 async function logout(){await api.signOut();S.session=null;S.me=null;S.bookings=[];S.profiles=[];S.book=null;go("")}
 
 /* ---------- account ---------- */
-VIEWS.account=()=>{const m=S.me;return `<div class="stack"><div><span class="eyebrow">Account ${esc(m.account_no||"")}</span><h1>Your account</h1></div>
+VIEWS.account=()=>{const m=S.me,ini=String(m.name||"?").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join("");return `<div class="stack"><h1>Your account</h1>
+  <div class="card me"><span class="avatar" aria-hidden="true">${esc(ini)}</span><span><b>${esc(m.name)}</b><br><span class="small muted">Account ${esc(m.account_no||"")}${m.car?" · "+esc(m.car):""}</span></span></div>
   ${freeNote()}
   ${+m.credit>0?`<div class="card"><h2>Credit: R${(+m.credit).toFixed(2)}</h2><p class="small muted">It's used automatically on your next booking.</p></div>`:""}
   <form class="card" id="fAcct" novalidate><h2>Your details</h2><div class="grid">
@@ -1314,7 +1440,7 @@ function moveText(){const f=S.fuel.forecast,d=daysUntil(f.effective),when=fmtD(f
   const ch=v=>typeof v!=="number"?"":`<b class="${v>0?"up":"down"}">${v>0?"up":"down"} about R${Math.abs(v).toFixed(2)}</b>`;
   if(d<=0)return `Prices changed on ${when}. New figures follow shortly.`;
   return typeof f.d50==="number"?`<b>${when}</b> (in ${d} day${d===1?"":"s"}): diesel ${ch(f.d50)}, petrol 95 ${ch(f.p95)} a litre. Estimate, not yet official.`:`<b>${when}</b> (in ${d} day${d===1?"":"s"}): no reliable estimate yet.`}
-const fuelTeaser=()=>`<a class="card" href="#/fuel" style="text-decoration:none;color:inherit;border-color:var(--teal)" id="fuelTeaser"><div class="between"><span class="eyebrow">Fuel Friend</span><span class="small">Open →</span></div><h2>Save on fuel too</h2><p class="muted small">When to fill up, and the cheapest diesel near you.</p></a>`;
+const fuelTeaser=()=>`<a class="card" href="#/fuel" style="text-decoration:none;color:inherit" id="fuelTeaser"><div class="between"><span class="eyebrow">Fuel Friend</span><span class="small">Open →</span></div><h2>Save on fuel too</h2><p class="muted small">When to fill up, and the cheapest diesel near you.</p></a>`;
 async function fuelTeaserFill(){const el=$("#fuelTeaser");if(!el)return;await loadFuel();if(!S.fuel||!$("#fuelTeaser"))return;
   const c=fuelCities().find(x=>x.id==="gqb");
   $("#fuelTeaser").innerHTML=`<div class="between"><span class="eyebrow">Fuel Friend</span><span class="small">More →</span></div><p>${moveText()}</p>${c&&c.cheapest?`<p class="small">Cheapest diesel in Gqeberha: <b>R${c.cheapest.price.toFixed(2)}</b> at ${esc(c.cheapest.name)}.</p>`:""}`}
@@ -1360,6 +1486,8 @@ const PRICE_LIST=[["Wash & Dry","once",75,null,"Outside wash and tyre polish"],[
   const d=loadDraft();if(S.me&&!isAdmin()&&d&&d.resume&&d.svc&&!/^#\/(book|paid)/.test(location.hash)){d.resume=false;S.book=d;saveDraft();history.replaceState(null,"","#/book/review")}
   S.loading=false;render();
 })();
+/* The top bar gets a soft shadow once the page scrolls under it. */
+addEventListener("scroll",()=>{const t=document.querySelector(".top");if(t)t.classList.toggle("scrolled",scrollY>4)},{passive:true});
 /* Offline banner */
 window.addEventListener("online",async()=>{setOffline(false);if(api){try{await loadPublic();if(S.session)await loadMe();await loadTaken();render()}catch(e){}}});
 window.addEventListener("offline",()=>setOffline(true));if(!navigator.onLine)setOffline(true);

@@ -3,9 +3,10 @@
    - Pages and settings are fetched fresh when there's a connection (so updates show up straight away),
      and the saved copy is used only when offline.
    - Bookings, accounts and prices (Supabase) are never cached: they always come live from the database. */
-const VERSION = "washlys-v1";
+const VERSION = "washlys-v2";
 const SHELL = ["./", "./index.html", "./config.js", "./vendor/supabase.js", "./manifest.webmanifest",
-  "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-32.png"];
+  "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-32.png",
+  "./img/hero.webp", "./img/exterior.webp", "./img/interior.webp"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
