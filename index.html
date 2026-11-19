@@ -160,6 +160,12 @@ details.card summary{cursor:pointer;font-weight:700}
 "use strict";
 /* ================= setup ================= */
 const CFG=window.WASHLYS_CONFIG||{};const CT=CFG.contact||{};
+/* Public email addresses: info@ for general questions, booking@ for anything about a booking. */
+const INFO_EMAIL=CT.infoEmail||"info@washlyscarwash.co.za",BOOK_EMAIL=CT.bookingEmail||"booking@washlyscarwash.co.za";
+const IG_HANDLE=CT.instagram||"washlyscarwash",FB_PAGE=CT.facebook||"washlyscarwash";
+const SOCIAL_ICON={
+  ig:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>',
+  fb:'<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M14 8h3V4h-3c-2.8 0-4.5 1.8-4.5 4.6V11H7v4h2.5v9h4v-9h3l.5-4h-3.5V8.8c0-.5.3-.8.5-.8z"/></svg>'};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const TZ="Africa/Johannesburg";
@@ -246,7 +252,9 @@ async function loadMe(){
   S.me=await api.profile(S.session.user.id);
   S.bookings=await api.bookings()||[];
   S.profiles=isAdmin()?(await api.profiles()||[]):[S.me];
-  S.payments=isAdmin()?(await api.payments()||[]):[];
+  /* Card payments are an add-on: if they can't be loaded, the rest of the app still works. */
+  S.dbUpdate=false;
+  if(isAdmin()){try{S.payments=await api.payments()||[]}catch(e){S.payments=[];S.dbUpdate=/payments|schema cache|does not exist/i.test(e.message||"")}}else S.payments=[];
 }
 async function loadTaken(){
   if(!api)return;const t=todayISO();
@@ -300,7 +308,7 @@ async function render(){
 
 /* ================= shared bits ================= */
 const notConnected=()=>`<div class="card"><h2>Bookings are opening soon</h2><p>The booking system isn't connected yet. In the meantime, book on WhatsApp or Instagram.</p>${contactRow()}</div>`;
-function contactRow(){return `<div class="row">${CT.whatsapp?`<a class="btn sm" href="${waLink(CT.whatsapp,"Hi Washly's, I'd like to book a wash.")}" target="_blank" rel="noopener">WhatsApp ${esc(CT.phone||"")}</a>`:""}${CT.email?`<a class="btn sm ghost" href="mailto:${esc(CT.email)}">${esc(CT.email)}</a>`:""}${CT.instagram?`<a class="btn sm ghost" href="https://www.instagram.com/${esc(CT.instagram)}/" target="_blank" rel="noopener">@${esc(CT.instagram)}</a>`:""}</div>`}
+function contactRow(kind){const em=kind==="booking"?BOOK_EMAIL:INFO_EMAIL;return `<div class="row">${CT.whatsapp?`<a class="btn sm" href="${waLink(CT.whatsapp,"Hi Washly's, I'd like to book a wash.")}" target="_blank" rel="noopener">WhatsApp ${esc(CT.phone||"")}</a>`:""}<a class="btn sm ghost" href="mailto:${esc(em)}">${esc(em)}</a><a class="btn sm ghost" href="https://www.instagram.com/${esc(IG_HANDLE)}/" target="_blank" rel="noopener">${SOCIAL_ICON.ig}Instagram</a><a class="btn sm ghost" href="https://www.facebook.com/${esc(FB_PAGE)}" target="_blank" rel="noopener">${SOCIAL_ICON.fb}Facebook</a></div>`}
 const freeNote=()=>`<div class="free"><b>Your account is free and it isn't a subscription.</b> There's no monthly fee and nothing is charged when you sign up. You only pay for the washes you book.</div>`;
 function priceLabel(svc,size){
   const ex=extraFor(size||"sedan");
@@ -613,7 +621,7 @@ VIEWS.washes=()=>{
     <p class="small muted">Move or cancel a wash up to the day before. On the day itself, please contact us: a missed wash is forfeited.</p>
     <h2>Coming up</h2><div class="stack" style="gap:10px" id="bkList">${up.map(b=>bookingCard(b)).join("")||`<p class="muted">Nothing booked.</p>`}</div>
     ${past.length?`<h2>Past and cancelled</h2><div class="stack" style="gap:10px">${past.slice(0,30).map(b=>bookingCard(b)).join("")}</div>`:""}
-    <div class="card"><h3>Need help?</h3>${contactRow()}</div></div>`;
+    <div class="card"><h3>Questions about a booking you've made?</h3><p class="small muted">To book, move or cancel a wash, use the app. For anything else about a booking, like a change on the day itself, contact us:</p>${contactRow("booking")}</div></div>`;
 };
 AFTER.washes=()=>{S.done=null};
 const creditNote=()=>S.me&&+S.me.credit>0?`<div class="free"><b>You have R${(+S.me.credit).toFixed(2)} credit.</b> It's used automatically on your next booking.</div>`:"";
@@ -708,6 +716,7 @@ VIEWS.today=()=>{
   const ordered=f==="past"?sel.slice().reverse():sel;
   const byDay={};ordered.forEach(b=>(byDay[b.date]??=[]).push(b));
   return `<div class="stack"><div class="between"><h1>Bookings</h1><button class="btn sm ghost" data-act="refresh">Refresh</button></div>
+    ${S.dbUpdate?`<div class="free" style="border-color:var(--warn)"><b>Database update needed.</b> Run <b>washlys-payments.sql</b> in Supabase (SQL Editor → New query → paste → Run). Until then, customers can't book.</div>`:""}
     <div class="stats">
       <div class="stat"><b>${all.filter(b=>b.date===t&&b.status==="booked").length}</b><span>washes today</span></div>
       <div class="stat"><b>${all.filter(b=>b.date>=t&&b.date<=weekEnd&&b.status==="booked").length}</b><span>booked, next 7 days</span></div>
@@ -911,7 +920,5 @@ if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostnam
   window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 }
 </script>
-<footer class="foot wrap">Washly's · Mobile car wash · <span id="footc"></span></footer>
-<script>document.getElementById("footc").textContent=[ (window.WASHLYS_CONFIG||{}).contact?.phone, (window.WASHLYS_CONFIG||{}).contact?.email ].filter(Boolean).join(" · ")</script>
 </body>
 </html>
