@@ -384,6 +384,75 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area
   .nav a[aria-current="page"] .ni{background:var(--teal-l)!important}
   .toast{bottom:112px}
 }
+/* ===== Fuel Friend in the app ===== */
+.fhead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.citysel{flex-direction:row;align-items:center;gap:2px;background:#fff;border-radius:999px;padding:2px 6px 2px 14px;box-shadow:var(--shadow);color:var(--teal-d)}
+.citysel svg{width:18px;height:18px;flex:none}
+.citysel select{border:0;background:transparent;padding:10px 8px;font-weight:700;color:var(--ink);box-shadow:none!important;width:auto;min-height:44px}
+.gauges.g4{grid-template-columns:repeat(2,1fr)}
+@media (min-width:760px){.gauges.g4{grid-template-columns:repeat(4,1fr)}}
+.gauges.g4 .gauge .p{font-size:24px}
+.gauges.g4 .gauge .g{font-size:11px}
+#nearMe>.btn{width:100%;min-height:52px}
+#nearMe>.btn svg{width:20px;height:20px}
+.verdict{background:#E3F3EB;border-radius:16px;padding:14px 16px;font-size:15px}
+.verdict b{display:block;color:var(--ok);font-family:var(--f-head);font-size:16.5px;margin-bottom:2px}
+.stlist{display:flex;flex-direction:column;gap:8px}
+.st{display:flex;align-items:stretch;background:var(--bg);border-radius:16px;overflow:hidden}
+.st.best{box-shadow:inset 0 0 0 2px var(--ok)}
+.st-main{all:unset;box-sizing:border-box;flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;padding:12px 14px;cursor:pointer}
+.st-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.st-top>b{font-weight:700;line-height:1.3}
+.st-main .badges{display:flex;gap:4px;flex-wrap:wrap}
+.st-main:focus-visible{outline:2px solid var(--teal);outline-offset:-2px}
+.st-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.st-tx b{font-weight:700;line-height:1.3}
+.st-tx .badges{display:flex;gap:4px;flex-wrap:wrap}
+.st-pr{display:flex;flex-direction:column;align-items:flex-end;white-space:nowrap;line-height:1.25}
+.st-pr b{font-family:var(--f-head);font-size:17px}
+.st-pr small{font-size:12px;color:var(--muted)}
+.st-go{all:unset;box-sizing:border-box;width:54px;flex:none;display:grid;place-items:center;background:var(--teal-l);color:var(--teal-d);cursor:pointer}
+.st-go svg{width:21px;height:21px}
+.st-go:active{background:#CBE5E8}
+.fmap{position:relative;z-index:0;height:380px;border-radius:18px;overflow:hidden;background:var(--teal-l)}
+.fmap .leaflet-container{font:inherit}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid2 label{font-size:13px}
+.answer{border-radius:16px;padding:14px 16px;background:var(--bg);display:flex;flex-direction:column;gap:3px;font-size:14.5px}
+.answer b{font-family:var(--f-head);font-size:17px}
+.answer.yes{background:#E3F3EB}.answer.yes b{color:var(--ok)}
+.answer.no{background:#FDF3DC}.answer.no b{color:#7A5200}
+.sums{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.sum{background:var(--bg);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.sum span{font-size:13px;color:var(--muted)}
+.sum b{font-family:var(--f-head);font-size:19px}
+.sum.hi{background:#E3F3EB}.sum.hi b{color:var(--ok)}
+.sum.warm{background:#FDF3DC}.sum.warm b{color:#7A5200}
+.rw{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid #EBF2F4}
+.rw:last-child{border-bottom:0}
+.rw span{color:var(--muted);font-size:14px;text-align:right}
+.news-i a{font-weight:700;text-decoration:none}
+/* ===== tab bar: slimmer and see-through (20 Nov) ===== */
+body{padding-bottom:calc(62px + env(safe-area-inset-bottom,0px))}
+.nav{background:rgba(255,255,255,.58);backdrop-filter:saturate(1.8) blur(18px);-webkit-backdrop-filter:saturate(1.8) blur(18px);border-top:1px solid rgba(15,59,80,.07);padding:5px 4px max(5px,calc(env(safe-area-inset-bottom,0px) - 12px))}
+.nav a{gap:1px;font-size:10.5px;padding:1px 2px}
+.nav a .ni{width:52px;height:28px;border-radius:14px}
+.nav a svg{width:21px;height:21px}
+.nav a[aria-current="page"] .ni{background:rgba(58,147,160,.18)}
+.toast{bottom:calc(74px + env(safe-area-inset-bottom,0px))}
+@media (min-width:760px){body{padding-bottom:96px}.nav{background:rgba(255,255,255,.62);bottom:16px;padding:6px}.toast{bottom:100px}}
+.top{transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .2s ease}
+.top.away{transform:translateY(-100%);opacity:0;pointer-events:none}
+.top.away:focus-within{transform:none;opacity:1;pointer-events:auto}
+@media (prefers-reduced-motion:reduce){.top{transition:none}}
+/* ===== tab bar as glass (20 Nov) ===== */
+.nav{background:linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,.22));backdrop-filter:blur(24px) saturate(2);-webkit-backdrop-filter:blur(24px) saturate(2);border-top:1px solid rgba(255,255,255,.65);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 -6px 24px rgba(15,59,80,.08)}
+.nav a{color:#3E5A66;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.nav a[aria-current="page"]{color:var(--navy)}
+.nav a[aria-current="page"] .ni{background:rgba(255,255,255,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.7),0 2px 8px rgba(15,59,80,.12)}
+@media (min-width:760px){.nav{background:linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,.26));border:1px solid rgba(255,255,255,.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 12px 32px rgba(15,59,80,.16)}}
+/* Phones without the blur effect get a slightly more solid bar so labels stay readable. */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.nav{background:rgba(255,255,255,.9)}}
 </style>
 </head>
 <body>
@@ -1434,7 +1503,7 @@ function cleanWhere(w){const p=String(w||"").replace(/^\d+(?=[A-Za-z])/,"").spli
 function fuelCities(){
   const D=S.fuel;return Object.entries(D.stations||{}).map(([id,c])=>{
     const zone=(D.zones||{})[id]||"inland",ws=D.official[zone].d50w;
-    const all=(c.rows||[]).filter(r=>typeof r[2]==="number").map(r=>({name:cleanName(String(r[0])),where:cleanWhere(r[1]),price:r[2],upd:dmyToIso(r[3])}));
+    const all=(c.rows||[]).filter(r=>typeof r[2]==="number").map(r=>({name:cleanName(String(r[0])),where:cleanWhere(r[1]),price:r[2],upd:dmyToIso(r[3]),lat:typeof r[5]==="number"?r[5]:null,lng:typeof r[6]==="number"?r[6]:null}));
     const m=midOf(all.map(s=>s.price)),ok=all.filter(s=>s.price>=20&&s.price<=50&&s.price>=m-4.5&&s.price<=m+4&&s.price>=ws-2);
     const fresh=ok.filter(s=>s.upd>=D.official.effective),L=(fresh.length>=8?fresh:ok).sort((a,b)=>a.price-b.price);
     return {id,name:c.name,zone,S:L,median:midOf(L.map(s=>s.price)),cheapest:L[0]};
@@ -1448,28 +1517,180 @@ const fuelTeaser=()=>`<a class="card" href="#/fuel" style="text-decoration:none;
 async function fuelTeaserFill(){const el=$("#fuelTeaser");if(!el)return;await loadFuel();if(!S.fuel||!$("#fuelTeaser"))return;
   const c=fuelCities().find(x=>x.id==="gqb");
   $("#fuelTeaser").innerHTML=`<div class="between"><span class="eyebrow">Fuel Friend</span><span class="small">More →</span></div><p>${moveText()}</p>${c&&c.cheapest?`<p class="small">Cheapest diesel in Gqeberha: <b>R${c.cheapest.price.toFixed(2)}</b> at ${esc(c.cheapest.name)}.</p>`:""}`}
-VIEWS.fuel=()=>`<div class="stack" id="fuelBox"><div><span class="eyebrow">Fuel Friend by Washly's</span><h1>Spend less on fuel</h1></div><p class="muted">Loading today's prices…</p></div>`;
+/* ---------- Fuel Friend in the app ----------
+   Prices come from the Fuel Friend page on GitHub (one source for both).
+   "Near me" uses the phone's location on the phone only; driving distances are estimates
+   (straight line × 1.35, about 35 km/h in town). Directions open in the customer's own maps app. */
+const FP=(()=>{let d={};try{d=JSON.parse(localStorage.getItem("washlys-fuel")||"{}")}catch(e){}return Object.assign({lit:60,cons:9,km:1500,fuel:"d",nav:""},d)})();
+const saveFP=()=>{try{localStorage.setItem("washlys-fuel",JSON.stringify(FP))}catch(e){}};
+const FS={me:null,city:null,rows:null,view:"list",msg:"",err:false,busy:false,map:null,list:[]};
+const NAV={google:s=>`https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}&travelmode=driving`,
+  apple:s=>`https://maps.apple.com/?daddr=${s.lat},${s.lng}&dirflg=d`,
+  waze:s=>`https://waze.com/ul?ll=${s.lat},${s.lng}&navigate=yes`};
+const NAV_LABEL={google:"Google Maps",apple:"Apple Maps",waze:"Waze"};
+const navOrder=()=>{const o=isIOS?["apple","google","waze"]:["google","waze","apple"];return FP.nav&&NAV[FP.nav]?[FP.nav,...o.filter(k=>k!==FP.nav)]:o};
+const hav=(a,b,c,d)=>{const t=x=>x*Math.PI/180,dl=t(c-a),dn=t(d-b),h=Math.sin(dl/2)**2+Math.cos(t(a))*Math.cos(t(c))*Math.sin(dn/2)**2;return 2*6371*Math.asin(Math.sqrt(h))};
+const ago=iso=>{const d=-daysUntil(iso);return d<=0?"price today":d===1?"price yesterday":`price ${d} days old`};
+const shortCity=c=>c.name.replace(/ \(.*\)/,"");
+/* Rand with a thousands separator: R1,973.52 */
+const Rk=n=>{const [a,b]=(+n).toFixed(2).split(".");return "R"+a.replace(/\B(?=(\d{3})+(?!\d))/g,",")+"."+b};
+const ICON_NAV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-8-8 18-2-8z"/></svg>';
+const ICON_PUMP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICON.fuel+'</svg>';
+
+function fuelCost(){
+  const rows=FS.rows.map(r=>{const drive=2*r.km*FP.cons/100*r.price;return Object.assign({},r,{drive,total:FP.lit*r.price+drive})});
+  const nearest=rows.reduce((a,b)=>b.km<a.km?b:a),best=rows.reduce((a,b)=>b.total<a.total?b:a);
+  return {rows:rows.sort((a,b)=>a.total-b.total),nearest,best};
+}
+function stRow(s,i,tags){
+  const meta=[s.km!=null?`${s.km.toFixed(1)} km · ${Math.max(1,Math.round(s.min))} min`:"",s.where,ago(s.upd)].filter(Boolean).map(esc).join(" · ");
+  const go=s.lat==null?"":FP.nav?`<a class="st-go" href="${NAV[FP.nav](s)}" target="_blank" rel="noopener" aria-label="Directions to ${esc(s.name)} in ${NAV_LABEL[FP.nav]}">${ICON_NAV}</a>`
+    :`<button type="button" class="st-go" data-st="${i}" aria-label="Directions to ${esc(s.name)}">${ICON_NAV}</button>`;
+  const sub=s.total==null&&tags.diff!=null?(tags.diff>0?"+"+R(tags.diff):"per litre"):"";
+  return `<div class="st ${tags.best?"best":""}"><button type="button" class="st-main" data-st="${i}">
+    <span class="st-top"><b>${esc(s.name)}</b><span class="st-pr"><b>${R(s.price)}</b>${sub?`<small>${sub}</small>`:""}</span></span>
+    ${tags.best||tags.near||tags.cheap?`<span class="badges">${tags.best?'<span class="badge done">Best value</span>':""}${tags.cheap?'<span class="badge done">Cheapest</span>':""}${tags.near?'<span class="badge">Nearest</span>':""}</span>`:""}
+    <span class="small muted">${meta}</span>${s.total!=null?`<span class="small">Fill-up and drive: <b>${Rk(s.total)}</b></span>`:""}</button>${go}</div>`;
+}
+function fuelHTML(){
+  const D=S.fuel,C=fuelCities();if(!C.some(c=>c.id===S.fuelCity))S.fuelCity="gqb";
+  const c=C.find(x=>x.id===S.fuelCity),off=D.official[c.zone],min=c.cheapest?c.cheapest.price:0;
+  const located=!!(FS.rows&&FS.city===c.id);let best=null,nearest=null;
+  if(located){const r=fuelCost();FS.list=r.rows;best=r.best;nearest=r.nearest}else FS.list=c.S.slice(0,10);
+  const save=located?nearest.total-best.total:0;
+  const f=D.forecast,pre=daysUntil(f.effective)>0;
+  const when=d=>fmtD(d,{day:"numeric",month:"short"});
+  return `
+  <div class="fhead"><div><span class="eyebrow">Fuel Friend by Washly's</span><h1>Spend less on fuel</h1></div>
+    <label class="citysel">${fi("pin")}<select id="fCity" aria-label="Your city">${C.map(x=>`<option value="${x.id}" ${x.id===c.id?"selected":""}>${esc(shortCity(x))}</option>`).join("")}</select></label></div>
+  <div class="gauges g4">
+    ${c.S.length?`<div class="gauge hero2"><span class="g">Diesel · ${esc(shortCity(c))} middle</span><span class="p">R${c.median.toFixed(2)}<small>/L</small></span><span class="d">${c.S.length} stations</span></div>
+    <div class="gauge"><span class="g">Cheapest diesel</span><span class="p">R${min.toFixed(2)}<small>/L</small></span><span class="d">${esc(c.cheapest.name)}</span></div>`:""}
+    <div class="gauge"><span class="g">Petrol 95</span><span class="p">R${off.p95.toFixed(2)}<small>/L</small></span><span class="d">Same at every station</span></div>
+    <div class="gauge"><span class="g">Petrol 93</span><span class="p">R${off.p93.toFixed(2)}<small>/L</small></span><span class="d">Same at every station</span></div>
+  </div>
+  <section class="card" id="nearMe">
+    <div class="sec-h"><h2>${located?"Best value near you":`Cheapest diesel in ${esc(shortCity(c))}`}</h2>${located?`<button type="button" class="linkbtn small" data-f="locate">Update</button>`:`<span class="small muted">Checked ${when(D.stationsChecked)}</span>`}</div>
+    ${located?(best===nearest?`<div class="verdict"><b>Your nearest station is also the best value</b>${esc(best.name)}, ${best.km.toFixed(1)} km away at ${R(best.price)}/L.</div>`
+      :`<div class="verdict"><b>${esc(best.name)} saves you ${R(save)}</b>It's ${best.km.toFixed(1)} km away at ${R(best.price)}/L. Filling ${FP.lit} L there costs ${R(save)} less than at your nearest station (${esc(nearest.name)}), even after the drive.</div>`)
+      :`<button type="button" class="btn" data-f="locate" ${FS.busy?"disabled":""}>${fi("pin")}${FS.busy?"Finding you…":"Find the best value near me"}</button><p class="tiny muted">Counts the fuel to drive there and back. Your location stays on your phone.</p>`}
+    ${FS.msg?`<p class="${FS.err?"errbox":"small muted"}" role="status">${esc(FS.msg)}</p>`:""}
+    <div class="seg" role="group" aria-label="Show as"><button type="button" data-f="list" aria-pressed="${FS.view==="list"}">List</button><button type="button" data-f="map" aria-pressed="${FS.view==="map"}">Map</button></div>
+    ${FS.view==="map"?`<div class="fmap" id="fmap" role="region" aria-label="Map of stations"></div><p class="tiny muted">Tap a station for directions.</p>`
+      :`<div class="stlist">${FS.list.map((s,i)=>stRow(s,i,located?{best:s===best,near:s===nearest}:{cheap:i===0,diff:s.price-min})).join("")||`<p class="muted">No station prices for ${esc(shortCity(c))} yet.</p>`}</div>`}
+    <p class="tiny muted">${located?`Filling ${FP.lit} L, plus the fuel to drive there and back (car using ${FP.cons} L/100 km). Distances are estimates. Change these in the calculator below.`:"Prices reported by drivers and stations on myTank. Check the pump before a full tank."}${FP.nav?` Directions open in ${NAV_LABEL[FP.nav]}. <button type="button" class="linkbtn" data-f="navreset">Change</button>`:""}</p>
+  </section>
+  <div class="card"><h2>When to fill up</h2><p>${moveText()}</p>${f.note?`<p class="small muted">${esc(f.note)}</p>`:""}
+    ${pre&&typeof f.d50==="number"?`<div class="sums"><div class="sum ${f.d50>0?"warm":"hi"}"><span>Diesel</span><b>${f.d50>0?"Fill up before":"Wait until"} ${when(f.effective)}</b></div><div class="sum ${f.p95>0?"warm":"hi"}"><span>Petrol</span><b>${f.p95>0?"Fill up before":"Wait until"} ${when(f.effective)}</b></div></div>`:""}</div>
+  <div class="card" id="fDet"><h2>Is the cheaper station worth the drive?</h2>
+    <div class="grid2">
+      <label>Usual station (R/L)<input id="dNear" type="number" inputmode="decimal" step="0.01" min="0" value="${(located?nearest.price:c.median||0).toFixed(2)}"></label>
+      <label>Cheaper station (R/L)<input id="dFar" type="number" inputmode="decimal" step="0.01" min="0" value="${(located?best.price:min||0).toFixed(2)}"></label>
+      <label>Litres you'll buy<input id="dLit" type="number" inputmode="decimal" step="1" min="0" value="${FP.lit}"></label>
+      <label>Extra km, there and back<input id="dKm" type="number" inputmode="decimal" step="1" min="0" value="${located&&best!==nearest?Math.max(0,Math.round((best.km-nearest.km)*2*10)/10):10}"></label>
+      <label>Your car's L/100 km<input id="dCons" type="number" inputmode="decimal" step="0.1" min="0" value="${FP.cons}"></label>
+    </div><div class="answer" id="dOut" aria-live="polite"></div></div>
+  <div class="card" id="fBill"><h2>Your monthly fuel bill</h2>
+    <div class="seg" role="group" aria-label="Fuel">${[["d","Diesel"],["p95","Petrol 95"],["p93","Petrol 93"]].map(([k,l])=>`<button type="button" data-mf="${k}" aria-pressed="${FP.fuel===k}">${l}</button>`).join("")}</div>
+    <div class="grid2"><label>Km you drive a month<input id="mKm" type="number" inputmode="decimal" step="50" min="0" value="${FP.km}"></label><label>Your car's L/100 km<input id="mCons" type="number" inputmode="decimal" step="0.1" min="0" value="${FP.cons}"></label></div>
+    <div class="sums" id="mOut"></div><p class="small muted" id="mNote"></p></div>
+  ${(D.rewards||[]).length?`<div class="card"><h2>Use the rewards card your station accepts</h2><p class="small muted">If you already have one of these, fill up at a brand that accepts it. Earn rates differ, so check yours.</p>
+    <div>${D.rewards.map(([b,p])=>`<div class="rw"><b>${esc(b)}</b><span>${esc(p)}</span></div>`).join("")}</div></div>`:""}
+  <div class="card"><h2>Fuel news</h2>${(D.news||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4).map(n=>`<div class="news-i"><span class="tiny muted">${fmtD(n.date,{day:"numeric",month:"short"})} · ${esc(n.src)}</span><b>${esc(n.title)}</b>${n.you?`<span class="small">What it means for you: ${esc(n.you)}</span>`:""}<a class="small" href="${esc(n.url)}" target="_blank" rel="noopener">Read more</a></div>`).join("")}</div>
+  <p class="tiny muted">Official prices from ${fmtD(D.official.effective,{day:"numeric",month:"long"})}: <a href="${esc(D.official.src.url)}" target="_blank" rel="noopener">${esc(D.official.src.name)}</a>. Station prices: <a href="${esc((D.stationsSrc||{}).url||"https://mytank.co.za/")}" target="_blank" rel="noopener">myTank</a>.</p>`;
+}
+function detourCalc(){
+  const v=id=>+(($("#"+id)||{}).value||0),near=v("dNear"),far=v("dFar"),lit=v("dLit"),km=v("dKm"),cons=v("dCons"),out=$("#dOut");if(!out)return;
+  if(!(near>0&&far>0&&lit>0)){out.className="answer";out.innerHTML="<span>Fill in both prices and the litres you'll buy.</span>";return}
+  const saving=(near-far)*lit,cost=km*cons/100*far,net=saving-cost,be=near>far&&cons>0?Math.round(((near-far)*lit)/(cons/100*far)*10)/10:0;
+  out.className="answer "+(net>0?"yes":"no");
+  out.innerHTML=net>0?`<b>Yes, you save ${R(net)}</b><span>${R(saving)} cheaper fuel, minus ${R(cost)} in fuel to get there. Worth it for detours up to ${be} km there and back.</span>`
+    :`<b>No, stay at your usual station</b><span>${near>far?`You'd save ${R(saving)} on fuel but spend ${R(cost)} getting there. It only pays off under ${be} km there and back.`:"The other station isn't cheaper."}</span>`;
+}
+function billCalc(){
+  const D=S.fuel,c=fuelCities().find(x=>x.id===S.fuelCity),o=D.official[c.zone],f=D.forecast,out=$("#mOut");if(!out)return;
+  const L=FP.km*FP.cons/100,pre=daysUntil(f.effective)>0,sum=(l,v,hi)=>`<div class="sum ${hi?"hi":""}"><span>${l}</span><b>${v}</b></div>`;
+  let h="",note=`About ${L.toFixed(0)} litres a month.`;
+  if(FP.fuel==="d"){
+    if(c.S.length){h=sum(`At the middle price in ${esc(shortCity(c))}`,Rk(L*c.median))+sum(`At ${esc(c.cheapest.name)}`,Rk(L*c.cheapest.price))+sum("You save by choosing well",R(L*(c.median-c.cheapest.price)),true)}
+    else h=sum("At the official wholesale price",Rk(L*o.d50w));
+    if(pre&&typeof f.d50==="number")note+=` From ${fmtD(f.effective,{day:"numeric",month:"long"})}, the expected change ${f.d50>0?"adds":"takes off"} about ${R(Math.abs(L*f.d50))} a month.`;
+  }else{
+    const p=FP.fuel==="p95"?o.p95:o.p93,inc=FP.fuel==="p95"?f.p95:f.p93;
+    h=sum("At today's price",Rk(L*p));
+    if(pre&&typeof inc==="number")h+=sum(`Expected from ${fmtD(f.effective,{day:"numeric",month:"short"})}`,Rk(L*(p+inc)))+sum(inc<0?"Saving each month":"Extra each month",R(Math.abs(L*inc)),inc<0);
+    note+=" Petrol costs the same at every station, so shopping around won't help: timing does.";
+  }
+  out.innerHTML=h;$("#mNote").textContent=note;
+}
+function openDirSheet(s){
+  if(s.lat==null){toast("No map location for this station.");return}
+  const html=`<h2 id="sheetT">Directions to ${esc(s.name)}</h2>
+    <div class="bkline"><span class="si">${ICON_PUMP}</span><span class="sx"><b>${R(s.price)} a litre</b><span>${[s.where,s.km!=null?s.km.toFixed(1)+" km away":"",ago(s.upd)].filter(Boolean).map(esc).join(" · ")}</span></span></div>
+    <div class="opts">${navOrder().map(k=>`<a class="opt" href="${NAV[k](s)}" target="_blank" rel="noopener" data-nav="${k}"><span class="si">${ICON_NAV}</span><span class="o-main"><b>${NAV_LABEL[k]}</b><span>${FP.nav===k?"Your usual maps app":"Opens directions"}</span></span></a>`).join("")}</div>
+    <p class="tiny muted">We'll remember the app you pick, so next time the arrow next to a station goes straight there.</p>
+    <div class="sheet-acts"><button type="button" class="btn ghost" data-sheet-close>Close</button></div>`;
+  openSheet(html,body=>{body.addEventListener("click",e=>{const a=e.target.closest("[data-nav]");if(!a)return;FP.nav=a.dataset.nav;saveFP();setTimeout(()=>{closeSheet();fuelDraw(true)},60)})});
+}
+function loadLeaflet(){
+  if(window.L)return Promise.resolve(true);
+  return new Promise(res=>{const base="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/";
+    const css=document.createElement("link");css.rel="stylesheet";css.href=base+"leaflet.css";document.head.appendChild(css);
+    const sc=document.createElement("script");sc.src=base+"leaflet.js";sc.integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH";sc.crossOrigin="anonymous";
+    sc.onload=()=>res(!!window.L);sc.onerror=()=>res(false);document.head.appendChild(sc);setTimeout(()=>res(!!window.L),8000)});
+}
+async function drawFuelMap(){
+  const el=$("#fmap");if(!el)return;
+  if(FS.map){try{FS.map.remove()}catch(e){}FS.map=null}
+  const ok=await loadLeaflet();if(!ok||!$("#fmap")){el.innerHTML=`<p class="muted" style="padding:16px">The map couldn't load. Check your connection, or use the list.</p>`;return}
+  const m=L.map(el,{scrollWheelZoom:false,zoomControl:true});FS.map=m;
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(m);
+  const pts=[];
+  if(FS.me&&FS.rows&&FS.city===S.fuelCity){pts.push([FS.me.lat,FS.me.lng]);L.circleMarker([FS.me.lat,FS.me.lng],{radius:8,color:"#fff",weight:3,fillColor:"#0F3B50",fillOpacity:1}).bindTooltip("You").addTo(m)}
+  FS.list.forEach((s,i)=>{if(s.lat==null)return;pts.push([s.lat,s.lng]);
+    L.circleMarker([s.lat,s.lng],{radius:i===0?10:7,color:"#fff",weight:2,fillColor:i===0?"#23845A":"#3A93A0",fillOpacity:.95}).bindTooltip(`${s.name} · ${R(s.price)}`).on("click",()=>openDirSheet(s)).addTo(m)});
+  if(pts.length)m.fitBounds(pts,{padding:[28,28],maxZoom:15});else m.setView([-33.96,25.6],12);
+  setTimeout(()=>m.invalidateSize(),60);
+}
+function locateMe(){
+  if(!("geolocation" in navigator)){FS.msg="Your phone can't share location here. Pick your city instead.";FS.err=true;fuelDraw(true);return}
+  FS.busy=true;FS.msg="";fuelDraw(true);
+  navigator.geolocation.getCurrentPosition(p=>{FS.busy=false;FS.me={lat:p.coords.latitude,lng:p.coords.longitude};
+      const C=fuelCities();let bestC=null;
+      for(const c of C)for(const s of c.S){if(s.lat==null)continue;const d=hav(FS.me.lat,FS.me.lng,s.lat,s.lng);if(!bestC||d<bestC.d)bestC={c,d}}
+      if(!bestC||bestC.d>25){FS.rows=null;FS.msg=`We don't have station prices near you yet. Fuel Friend covers ${C.map(shortCity).join(", ")}.`;FS.err=true;fuelDraw(true);return}
+      const c=bestC.c;S.fuelCity=c.id;try{localStorage.setItem("washlys-fuel-city",c.id)}catch(e){}
+      const withD=c.S.filter(s=>s.lat!=null).map(s=>({s,air:hav(FS.me.lat,FS.me.lng,s.lat,s.lng)}));
+      const near=withD.slice().sort((a,b)=>a.air-b.air).slice(0,10),cheap=withD.slice().sort((a,b)=>a.s.price-b.s.price).slice(0,6);
+      FS.rows=[...new Map([...near,...cheap].map(x=>[x.s.name+x.s.lat,x])).values()].map(x=>Object.assign({},x.s,{km:x.air*1.35,min:x.air*1.35/35*60}));
+      FS.city=c.id;FS.msg="";FS.err=false;fuelDraw(false);const n=$("#nearMe");if(n)n.scrollIntoView({block:"start",behavior:"smooth"})},
+    e=>{FS.busy=false;FS.err=true;FS.msg=e.code===1?"Location is switched off for Washly's. Allow it in your phone's settings, or pick your city above.":"We couldn't get your location. Try again, or pick your city above.";fuelDraw(true)},
+    {enableHighAccuracy:false,timeout:12000,maximumAge:300000});
+}
+function fuelDraw(keep){
+  const box=$("#fuelBox");if(!box||!S.fuel)return;const y=scrollY;
+  if(FS.map){try{FS.map.remove()}catch(e){}FS.map=null}
+  box.innerHTML=fuelHTML();if(keep)scrollTo(0,y);
+  detourCalc();billCalc();if(FS.view==="map")drawFuelMap();
+  $("#fCity").onchange=e=>{S.fuelCity=e.target.value;try{localStorage.setItem("washlys-fuel-city",S.fuelCity)}catch(x){}FS.msg="";fuelDraw(true)};
+  box.onclick=e=>{const t=e.target.closest("[data-f],[data-st],[data-mf]");if(!t)return;
+    if(t.dataset.st!=null){openDirSheet(FS.list[+t.dataset.st]);return}
+    if(t.dataset.mf){FP.fuel=t.dataset.mf;saveFP();box.querySelectorAll("[data-mf]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.mf===FP.fuel));billCalc();return}
+    const f=t.dataset.f;
+    if(f==="locate")return locateMe();
+    if(f==="list"||f==="map"){FS.view=f;fuelDraw(true);return}
+    if(f==="navreset"){FP.nav="";saveFP();fuelDraw(true);toast("You'll be asked which maps app to use next time.")}};
+  box.oninput=e=>{const id=e.target.id;if(!id)return;
+    if(id==="dLit"||id==="dCons"){const v=+e.target.value;if(v>0){FP[id==="dLit"?"lit":"cons"]=v;saveFP();if(id==="dCons"&&$("#mCons"))$("#mCons").value=v;billCalc()}}
+    if(id==="mKm"||id==="mCons"){const v=+e.target.value;if(v>=0){FP[id==="mKm"?"km":"cons"]=v;saveFP();if(id==="mCons"&&$("#dCons"))$("#dCons").value=v;billCalc();detourCalc()}}
+    if(/^d/.test(id))detourCalc()};
+  /* Litres or fuel use changed: refresh the "near you" totals once the person is done typing. */
+  box.onchange=e=>{if(["dLit","dCons","mCons"].includes(e.target.id)&&FS.rows&&FS.city===S.fuelCity)fuelDraw(true)};
+}
+VIEWS.fuel=()=>`<div class="stack" id="fuelBox"><div class="fhead"><div><span class="eyebrow">Fuel Friend by Washly's</span><h1>Spend less on fuel</h1></div></div><div class="skel" style="height:220px"></div><div class="skel" style="height:320px"></div></div>`;
 AFTER.fuel=async()=>{await loadFuel();const box=$("#fuelBox");if(!box)return;
   if(!S.fuel){box.innerHTML=`<h1>Fuel Friend</h1><div class="card"><p>${esc(S.fuelErr)}</p><a class="btn" href="${esc(CFG.fuelPage||"/Fuel_Friend/")}">Open Fuel Friend</a></div>`;return}
-  const D=S.fuel,C=fuelCities();if(!C.some(c=>c.id===S.fuelCity))S.fuelCity="gqb";const c=C.find(x=>x.id===S.fuelCity),off=D.official[c.zone];
-  const top=c.S.slice(0,10),min=c.cheapest?c.cheapest.price:0;
-  box.innerHTML=`<div class="between"><div><span class="eyebrow">Fuel Friend by Washly's</span><h1>Spend less on fuel</h1></div>
-      <label style="min-width:220px">Your city<select id="fCity">${C.map(x=>`<option value="${x.id}" ${x.id===c.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></label></div>
-    <div class="gauges">
-      ${c.S.length?`<div class="gauge hero2"><span class="g">Diesel 50ppm · ${esc(c.name.replace(/ \(.*\)/,""))} middle</span><span class="p">R${c.median.toFixed(2)}<small>/L</small></span><span class="d">${c.S.length} stations</span></div>
-      <div class="gauge"><span class="g">Cheapest diesel</span><span class="p">R${min.toFixed(2)}<small>/L</small></span><span class="d">${esc(c.cheapest.name)}</span></div>`:""}
-      <div class="gauge"><span class="g">Petrol 95 · ${c.zone}</span><span class="p">R${off.p95.toFixed(2)}<small>/L</small></span><span class="d">Same at every station</span></div>
-      <div class="gauge"><span class="g">Petrol 93 · ${c.zone}</span><span class="p">R${off.p93.toFixed(2)}<small>/L</small></span><span class="d">Same at every station</span></div>
-    </div>
-    <div class="card"><h2>When to fill up</h2><p>${moveText()}</p>${D.forecast.note?`<p class="small muted">${esc(D.forecast.note)}</p>`:""}
-      ${daysUntil(D.forecast.effective)>0&&typeof D.forecast.d50==="number"?`<p class="small"><b>Diesel:</b> ${D.forecast.d50>0?"fill up before":"wait until"} ${fmtD(D.forecast.effective,{day:"numeric",month:"short"})} if you can. <b>Petrol:</b> ${D.forecast.p95>0?"fill up before":"wait until"} ${fmtD(D.forecast.effective,{day:"numeric",month:"short"})} if you can.</p>`:""}</div>
-    ${top.length?`<div class="card"><div class="between"><h2>Cheapest diesel in ${esc(c.name.replace(/ \(.*\)/,""))}</h2><span class="small muted">Checked ${fmtD(D.stationsChecked,{day:"numeric",month:"short"})}</span></div>
-      <div class="tbl"><table><thead><tr><th>Station</th><th class="n">Diesel</th><th class="n">vs cheapest</th></tr></thead><tbody>${top.map(s=>`<tr class="${s.price===min?"best":""}"><td><b>${esc(s.name)}</b>${s.where?`<br><span class="tiny muted">${esc(s.where)}</span>`:""}</td><td class="n">R${s.price.toFixed(2)}</td><td class="n">${s.price===min?"Cheapest":"+R"+(s.price-min).toFixed(2)}</td></tr>`).join("")}</tbody></table></div>
-      <p class="tiny muted">Prices reported by drivers and stations on myTank. Check the pump before a full tank.</p></div>`:""}
-    <div class="card"><h2>Fuel news</h2>${(D.news||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4).map(n=>`<div class="news-i"><span class="tiny muted">${fmtD(n.date,{day:"numeric",month:"short"})} · <a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.src)}</a></span><b>${esc(n.title)}</b>${n.you?`<span class="small">What it means: ${esc(n.you)}</span>`:""}</div>`).join("")}</div>
-    <div class="row"><a class="btn ghost" href="${esc(CFG.fuelPage||"/Fuel_Friend/")}">Open the full Fuel Friend (map, rewards cards, all stations)</a></div>
-    <p class="tiny muted">Official prices from ${fmtD(D.official.effective,{day:"numeric",month:"long"})}: <a href="${esc(D.official.src.url)}" target="_blank" rel="noopener">${esc(D.official.src.name)}</a>.</p>`;
-  $("#fCity").onchange=e=>{S.fuelCity=e.target.value;try{localStorage.setItem("washlys-fuel-city",S.fuelCity)}catch(x){}AFTER.fuel()}};
+  fuelDraw(false)};
 
 /* Shown until the database is connected (same as the price list in the database setup). */
 const PRICE_LIST=[["Wash & Dry","once",75,null,"Outside wash and tyre polish"],["Full Wash","once",120,null,"Outside wash, tyre polish, vacuum, dash shine and air freshener"],["Inside Wash","once",60,null,"Vacuum, dash shine and air freshener"],["Vacuuming","once",40,null,"Vacuum only"],
@@ -1490,8 +1711,9 @@ const PRICE_LIST=[["Wash & Dry","once",75,null,"Outside wash and tyre polish"],[
   const d=loadDraft();if(S.me&&!isAdmin()&&d&&d.resume&&d.svc&&!/^#\/(book|paid)/.test(location.hash)){d.resume=false;S.book=d;saveDraft();history.replaceState(null,"","#/book/review")}
   S.loading=false;render();
 })();
-/* The top bar gets a soft shadow once the page scrolls under it. */
-addEventListener("scroll",()=>{const t=document.querySelector(".top");if(t)t.classList.toggle("scrolled",scrollY>4)},{passive:true});
+/* The top bar slides away as soon as the page scrolls, and comes back only at the very top. */
+const topBar=()=>{const t=document.querySelector(".top");if(t)t.classList.toggle("away",scrollY>8)};
+addEventListener("scroll",topBar,{passive:true});addEventListener("hashchange",()=>setTimeout(topBar,0));
 /* Offline banner */
 window.addEventListener("online",async()=>{setOffline(false);if(api){try{await loadPublic();if(S.session)await loadMe();await loadTaken();render()}catch(e){}}});
 window.addEventListener("offline",()=>setOffline(true));if(!navigator.onLine)setOffline(true);
