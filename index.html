@@ -250,6 +250,31 @@ details.more[open] summary{margin-bottom:10px}
   .btn:active,.opt:active,.day:active,.time:active,.chip:active,.iconbtn:active,.nav a:active{transform:none!important}
   .prog i{transition:none}
 }
+/* ===== bottom sheets (Move, Cancel) ===== */
+.sheet-wrap{position:fixed;inset:0;z-index:60}
+.sheet-bg{position:absolute;inset:0;background:rgba(8,28,38,.48);opacity:0;transition:opacity .25s ease}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;background:#fff;border-radius:26px 26px 0 0;padding:8px 16px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -12px 40px rgba(8,28,38,.2);transform:translateY(100%);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+.sheet-wrap.open .sheet-bg{opacity:1}
+.sheet-wrap.open .sheet{transform:none}
+.sheet.dragging{transition:none}
+.grab{width:42px;height:5px;border-radius:5px;background:#CAD8DC;margin:4px auto 14px}
+.sheet-body{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.sheet h2{font-size:22px;line-height:1.2}
+.sheet .days{margin:0 -16px}
+.sheet-acts{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.sheet-acts .btn{width:100%;min-height:52px;border-radius:15px;font-size:16px}
+.btn.danger{background:#fff;color:var(--warn);border:1.5px solid #E6B3A8}
+.btn.danger:hover{background:#FBECE8}
+.time.now:disabled{color:var(--teal-d);box-shadow:0 0 0 1.5px var(--teal) inset;background:var(--teal-l)}.time.now:disabled b{text-decoration:none;font-weight:700}
+.bkline{display:flex;gap:12px;align-items:center;background:var(--bg);border-radius:16px;padding:12px 14px}
+.bkline .si{background:#fff}
+body.sheet-open{overflow:hidden}
+@media (min-width:760px){
+  .sheet{left:50%;right:auto;bottom:auto;top:50%;width:min(560px,92vw);max-height:86vh;border-radius:24px;padding:22px 24px;opacity:0;transform:translate(-50%,-46%);transition:transform .25s ease,opacity .2s ease}
+  .sheet-wrap.open .sheet{transform:translate(-50%,-50%);opacity:1}
+  .grab{display:none}
+}
+@media (prefers-reduced-motion:reduce){.sheet,.sheet-bg{transition:none!important}}
 </style>
 </head>
 <body>
@@ -1009,18 +1034,88 @@ AFTER.paid=async(arg)=>{const [id,how]=String(arg||"").split("/");const box=$("#
     if(pay&&pay.status==="failed"){box.innerHTML=`<p>The payment didn't go through. Nothing was charged.</p><a class="btn" href="#/washes">My washes</a>`;return}
     await new Promise(r=>setTimeout(r,1600))}
   box.innerHTML=`<p>We're still waiting for Yoco to confirm. If you paid, your booking will show as <b>Paid</b> under My washes shortly. You won't be charged twice.</p><a class="btn" href="#/washes">My washes</a>`};
+/* ---------- bottom sheets: panels that slide up for Move and Cancel ----------
+   The phone's back gesture, Escape, tapping outside or swiping down all close them. */
+const SHEET={el:null,pushed:false,last:null};
+function openSheet(html,mount){
+  if(SHEET.el)closeSheet();
+  const w=document.createElement("div");w.className="sheet-wrap";
+  w.innerHTML=`<div class="sheet-bg" data-sheet-close></div><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT"><div class="grab" aria-hidden="true"></div><div class="sheet-body"></div></div>`;
+  document.body.appendChild(w);SHEET.el=w;SHEET.last=document.activeElement;document.body.classList.add("sheet-open");
+  w.addEventListener("click",e=>{if(e.target.closest("[data-sheet-close]"))closeSheet()});
+  sheetBody(html,mount);
+  void w.offsetWidth;w.classList.add("open");
+  try{history.pushState({sheet:1},"",location.href);SHEET.pushed=true}catch(e){SHEET.pushed=false}
+  /* swipe down to close */
+  const sh=w.querySelector(".sheet");let y0=null,dy=0;
+  sh.addEventListener("touchstart",e=>{if(sh.scrollTop>0||e.target.closest(".days,input,textarea,select")){y0=null;return}y0=e.touches[0].clientY;dy=0},{passive:true});
+  sh.addEventListener("touchmove",e=>{if(y0==null)return;dy=Math.max(0,e.touches[0].clientY-y0);if(dy>4){sh.classList.add("dragging");sh.style.transform=`translateY(${dy}px)`;e.preventDefault()}},{passive:false});
+  sh.addEventListener("touchend",()=>{if(y0==null)return;sh.classList.remove("dragging");sh.style.transform="";if(dy>90)closeSheet();y0=null});
+}
+function sheetBody(html,mount){const body=SHEET.el&&SHEET.el.querySelector(".sheet-body");if(!body)return;body.innerHTML=html;if(mount)mount(body);
+  const t=body.querySelector("#sheetT");if(t){t.tabIndex=-1;t.focus({preventScroll:true})}}
+function closeSheet(){
+  const w=SHEET.el;if(!w)return;SHEET.el=null;w.classList.remove("open");document.body.classList.remove("sheet-open");
+  setTimeout(()=>w.remove(),340);
+  if(SHEET.pushed){SHEET.pushed=false;history.back()}
+  if(SHEET.last&&document.contains(SHEET.last))try{SHEET.last.focus({preventScroll:true})}catch(e){}
+}
+window.addEventListener("popstate",()=>{if(SHEET.el){SHEET.pushed=false;closeSheet()}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&SHEET.el)closeSheet()});
+const sheetErr=(body,m)=>{const er=body.querySelector(".errbox");if(er){er.textContent=m;er.hidden=false}};
+const bkLine=b=>`<div class="bkline"><span class="si">${fi("cal")}</span><span class="sx"><b>${esc(b.service_name)}${b.kind==="monthly"?` · wash ${b.wash_no} of 4`:""}</b><span>${fmtD(b.date,{weekday:"long",day:"numeric",month:"long"})} at ${esc(b.slot)}</span></span></div>`;
+async function afterSheetChange(){await Promise.all([loadMe(),loadTaken()]);const y=window.scrollY;render();window.scrollTo(0,y)}
+
+function moveSheetHtml(b,sel){
+  const ts=takenSet(),days=bookableDays(isAdmin());if(!days.includes(b.date)&&b.date>=todayISO())days.unshift(b.date);
+  const free=(d,s)=>(d===b.date&&s===b.slot)||!ts.has(d+" "+s),slots=setts().slots;
+  const full=d=>slots.every(s=>!free(d,s)||(d===b.date&&s===b.slot));
+  const same=sel.date===b.date&&sel.slot===b.slot,ready=sel.slot&&!same;
+  return `<h2 id="sheetT">Move ${isAdmin()?"this":"your"} wash</h2>${bkLine(b)}
+    ${b.kind==="monthly"?`<p class="small muted">This moves wash ${b.wash_no} of 4 only. The others stay as they are.</p>`:""}
+    <div class="days" role="group" aria-label="New day">${days.map(d=>{const f=full(d);return `<button type="button" class="day" data-day="${d}" aria-pressed="${sel.date===d}" ${f?"disabled":""}><small>${fmtD(d,{weekday:"short"})}</small><b>${fmtD(d,{day:"numeric"})}</b><small>${f?"Full":fmtD(d,{month:"short"})}</small></button>`}).join("")}</div>
+    <div class="fl"><span class="sub">${fmtD(sel.date,{weekday:"long",day:"numeric",month:"long"})}</span>
+      <div class="times" role="group" aria-label="New time">${slots.map(s=>{const now=sel.date===b.date&&s===b.slot,f=free(sel.date,s);return `<button type="button" class="time${now?" now":""}" data-slot="${s}" aria-pressed="${sel.slot===s&&!now}" ${f&&!now?"":"disabled"}><b>${s}</b>${now?"<small>Booked now</small>":f?"":"<small>Taken</small>"}</button>`}).join("")}</div></div>
+    <p class="errbox" role="alert" hidden></p>
+    <div class="sheet-acts"><button type="button" class="btn" id="sMove" ${ready?"":"disabled"}>${ready?`Move to ${fmtD(sel.date)}, ${sel.slot}`:"Choose a new day and time"}</button><button type="button" class="btn ghost" data-sheet-close>Keep it as it is</button></div>`;
+}
+async function openMoveSheet(b,inSheet){
+  try{await loadTaken()}catch(e){}
+  const sel={date:b.date,slot:null};
+  const mount=body=>{
+    const c=body.querySelector(".days"),d=c&&c.querySelector("[aria-pressed=true]");if(c&&d){const a=d.getBoundingClientRect(),r=c.getBoundingClientRect();if(a.right>r.right-8||a.left<r.left+8)c.scrollLeft+=a.left-r.left-16}
+    body.onclick=async e=>{const t=e.target.closest("[data-day],[data-slot],#sMove");if(!t)return;
+      if(t.dataset.day){tapFeel();const x=c?c.scrollLeft:0;sel.date=t.dataset.day;sel.slot=null;sheetBody(moveSheetHtml(b,sel),mount);const c2=SHEET.el.querySelector(".days");if(c2)c2.scrollLeft=x;return}
+      if(t.dataset.slot){tapFeel();const x=c?c.scrollLeft:0;sel.slot=t.dataset.slot;sheetBody(moveSheetHtml(b,sel),mount);const c2=SHEET.el.querySelector(".days");if(c2)c2.scrollLeft=x;return}
+      t.disabled=true;t.textContent="Moving…";
+      try{await api.move(b.id,sel.date,sel.slot);closeSheet();toast(`Moved to ${fmtD(sel.date,{weekday:"long",day:"numeric",month:"short"})} at ${sel.slot}`);await afterSheetChange()}
+      catch(x){sheetErr(body,x.message);t.disabled=false;t.textContent=`Move to ${fmtD(sel.date)}, ${sel.slot}`;try{await loadTaken()}catch(e){}}};
+  };
+  if(inSheet)sheetBody(moveSheetHtml(b,sel),mount);else openSheet(moveSheetHtml(b,sel),mount);
+}
+function openCancelSheet(b){
+  const mine=!isAdmin(),money=+b.paid_amount||0,cred=+b.credit_used||0;
+  const html=`<h2 id="sheetT">${mine?"Would you like to move this wash to another day instead?":"Move this wash instead of cancelling?"}</h2>${bkLine(b)}
+    ${money>0?`<div class="hint">${fi("info")}<span>If ${mine?"you cancel":"it's cancelled"}, the R${money.toFixed(2)} ${mine?"you":"they"} paid is refunded${b.pay_method==="card online"?" to the card":""}.</span></div>`:""}
+    ${cred>0?`<div class="hint">${fi("info")}<span>R${cred.toFixed(2)} goes back to ${mine?"your":"their"} account credit.</span></div>`:""}
+    <p class="errbox" role="alert" hidden></p>
+    <div class="sheet-acts"><button type="button" class="btn" data-s="move">Yes, move it</button><button type="button" class="btn danger" data-s="cancel">No, cancel ${money>0?"and refund":"it"}</button><button type="button" class="btn ghost" data-sheet-close>Keep it</button></div>`;
+  openSheet(html,body=>{body.onclick=async e=>{const t=e.target.closest("[data-s]");if(!t)return;
+    if(t.dataset.s==="move")return openMoveSheet(b,true);
+    t.disabled=true;t.textContent="Cancelling…";
+    try{let msg="Wash cancelled";
+      if(+b.paid_amount>0&&b.pay_method==="card online"){const r=await api.fn({action:"cancel",booking_id:b.id});
+        msg=r.refund==="refunding"?`Cancelled. R${(+r.amount).toFixed(2)} is on its way back to the card. Banks usually take a few working days.`:r.refund==="due"?`Cancelled. The refund of R${(+r.amount).toFixed(2)} is noted: Washly's will pay it back.`:msg}
+      else{const c=await api.cancel(b.id);msg=c&&c.pay_status==="refund_due"?`Cancelled. The refund of R${(+c.refund_due).toFixed(2)} is noted: Washly's will pay it back.`:+(c&&c.credited)>0?`Cancelled. R${(+c.credited).toFixed(2)} is back in the account credit.`:msg}
+      closeSheet();toast(msg);await afterSheetChange()}
+    catch(x){sheetErr(body,x.message);t.disabled=false;t.textContent=`No, cancel ${money>0?"and refund":"it"}`}}});
+}
+
 async function bookingAction(e){
   const btn=e.target.closest("[data-act]");if(!btn)return;const card=btn.closest("[data-bk]");if(!card)return;
   const id=+card.dataset.bk,b=S.bookings.find(x=>x.id===id);if(!b)return;const act=btn.dataset.act;
   try{
-    if(act==="cancel"){const m=card.querySelector(".mover"),money=+b.paid_amount||0,cred=+b.credit_used||0,mine=!isAdmin();
-      m.innerHTML=`<div class="free" style="border-color:var(--sun)"><b>${mine?"Would you like to move this wash to another day instead?":"Move this wash instead of cancelling?"}</b>
-        ${money>0?`<p class="small">If ${mine?"you cancel":"it's cancelled"}, the R${money.toFixed(2)} ${mine?"you":"they"} paid is refunded${b.pay_method==="card online"?" to the card":""}.</p>`:""}${cred>0?`<p class="small">R${cred.toFixed(2)} goes back to ${mine?"your":"their"} account credit.</p>`:""}
-        <div class="row" style="margin-top:8px"><button class="btn sm" data-act="move">Yes, move it</button><button class="btn sm warn" data-act="cancelConfirm">No, cancel${money>0?" and refund":""}</button><button class="btn sm ghost" data-act="closeMove">Keep it</button></div></div>`;return}
-    else if(act==="cancelConfirm"){btn.disabled=true;btn.textContent="Cancelling…";
-      if(+b.paid_amount>0&&b.pay_method==="card online"){const r=await api.fn({action:"cancel",booking_id:id});
-        toast(r.refund==="refunding"?`Cancelled. R${(+r.amount).toFixed(2)} is on its way back to the card. Banks usually take a few working days.`:r.refund==="due"?`Cancelled. The refund of R${(+r.amount).toFixed(2)} is noted: Washly's will pay it back.`:"Wash cancelled")}
-      else{const c=await api.cancel(id);toast(c&&c.pay_status==="refund_due"?`Cancelled. The refund of R${(+c.refund_due).toFixed(2)} is noted: Washly's will pay it back.`:+(c&&c.credited)>0?`Cancelled. R${(+c.credited).toFixed(2)} is back in the account credit.`:"Wash cancelled")}}
+    if(act==="cancel"){openCancelSheet(b);return}
     else if(act==="markRefunded"){if(btn.dataset.sure!=="1"){btn.dataset.sure="1";btn.textContent=`Tap again: I've paid back R${(+b.refund_due).toFixed(2)}`;return}
       await api.updateBooking(id,{pay_status:"refunded",refund_due:0});toast("Marked as refunded")}
     else if(act==="status"){await api.updateBooking(id,{status:btn.dataset.st});toast("Marked "+STATUS[btn.dataset.st].toLowerCase())}
@@ -1032,13 +1127,7 @@ async function bookingAction(e){
       btn.disabled=true;const r=await api.refund(b.payment_id);toast(r.status==="succeeded"?"Refunded":"Refund sent to Yoco. It shows here once Yoco confirms.")}
     else if(act==="price"){const m=card.querySelector(".mover");m.innerHTML=`<div class="row"><label style="flex:1">Price (R)<input type="number" min="0" step="0.01" value="${b.price??""}" data-in="price"></label><button class="btn sm" data-act="savePrice">Save</button></div>`;return}
     else if(act==="savePrice"){const v=card.querySelector("[data-in=price]").value;await api.updateBooking(id,{price:v===""?null:+v});toast("Price saved")}
-    else if(act==="move"){await loadTaken();const ts=takenSet(),days=bookableDays(isAdmin()).concat(isAdmin()?[]:[]);const m=card.querySelector(".mover");
-      m.innerHTML=`<div class="grid"><label>New day<select data-in="day">${days.map(d=>`<option value="${d}" ${d===b.date?"selected":""}>${fmtD(d)}</option>`).join("")}</select></label>
-        <label>New time<select data-in="slot"></select></label></div><div class="row"><button class="btn sm" data-act="saveMove">Move this wash</button><button class="btn sm ghost" data-act="closeMove">Keep it</button></div>`;
-      const ds=m.querySelector("[data-in=day]"),ss=m.querySelector("[data-in=slot]");
-      const fill=()=>{ss.innerHTML=setts().slots.map(s=>{const mine=ds.value===b.date&&s===b.slot,free=mine||!ts.has(ds.value+" "+s);return `<option value="${s}" ${free?"":"disabled"} ${mine?"selected":""}>${s}${free?"":" (taken)"}</option>`}).join("")};ds.onchange=fill;fill();return}
-    else if(act==="closeMove"){card.querySelector(".mover").innerHTML="";return}
-    else if(act==="saveMove"){const d=card.querySelector("[data-in=day]").value,s=card.querySelector("[data-in=slot]").value;await api.move(id,d,s);toast(`Moved to ${fmtD(d)} at ${s}`)}
+    else if(act==="move"){openMoveSheet(b);return}
     else return;
     await Promise.all([loadMe(),loadTaken()]);const y=window.scrollY;render();window.scrollTo(0,y);
   }catch(x){toast(x.message)}
