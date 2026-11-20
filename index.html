@@ -453,6 +453,47 @@ body{padding-bottom:calc(62px + env(safe-area-inset-bottom,0px))}
 @media (min-width:760px){.nav{background:linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,.26));border:1px solid rgba(255,255,255,.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 12px 32px rgba(15,59,80,.16)}}
 /* Phones without the blur effect get a slightly more solid bar so labels stay readable. */
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.nav{background:rgba(255,255,255,.9)}}
+/* ===== photo cards with movement (20 Nov) ===== */
+@keyframes kb{from{transform:scale(1.02) translate(0,0)}to{transform:scale(1.14) translate(-2%,-2%)}}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.ph{position:relative;overflow:hidden;display:block}
+.ph-i{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:kb 14s ease-in-out infinite alternate;will-change:transform}
+.tile:nth-child(2) .ph-i{animation-delay:-4s}.tile:nth-child(3) .ph-i{animation-delay:-8s}.tile:nth-child(4) .ph-i{animation-delay:-11s}
+.ph:after{content:"";position:absolute;inset:0;pointer-events:none}
+.tone-teal:after{background:linear-gradient(200deg,rgba(58,147,160,.05) 30%,rgba(58,147,160,.55))}
+.tone-navy:after{background:linear-gradient(200deg,rgba(15,59,80,.05) 30%,rgba(15,59,80,.6))}
+.tone-amber:after{background:linear-gradient(200deg,rgba(214,140,40,.05) 30%,rgba(190,110,20,.55))}
+.tone-plum:after{background:linear-gradient(200deg,rgba(110,80,170,.05) 30%,rgba(90,60,150,.55))}
+.ph .tag,.pkg2 .tag{position:absolute;z-index:2;left:10px;bottom:10px;background:rgba(255,255,255,.88);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--navy);font-weight:800;font-size:14px;padding:5px 10px;border-radius:999px;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.tile{width:230px}
+.tile .ph{height:150px;background:var(--teal-l)}
+.tile .go{display:flex;align-items:center;gap:4px;color:var(--teal-d);font-weight:700;font-size:13.5px;margin-top:6px}
+.tile .go .arr{width:15px;height:15px;transform:rotate(180deg);transition:transform .2s}
+.tile:hover .go .arr{transform:rotate(180deg) translateX(-3px)}
+.tile:active{transform:scale(.97)}
+.tile{transition:transform .15s ease}
+.pkg2{position:relative;display:block;height:190px;border-radius:22px;overflow:hidden;text-decoration:none;color:#fff;box-shadow:var(--shadow)}
+.pkg2 .ph{position:absolute;inset:0}
+.pkg2 .ph:after{background:linear-gradient(90deg,rgba(12,48,66,.92) 0%,rgba(12,48,66,.55) 55%,rgba(12,48,66,.1))}
+.pkg2 .ph-i{animation-duration:18s}
+.pk-tx{position:absolute;inset:0;z-index:2;padding:18px 20px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;max-width:78%}
+.pk-tx b{font-family:var(--f-head);font-size:22px}
+.pk-tx span:not(.tag){font-size:14px;opacity:.92}
+.pkg2 .tag{position:static;align-self:flex-start;margin-bottom:6px}
+.reveal{animation:rise .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d,0ms)}
+@media (prefers-reduced-motion:reduce){.ph-i,.reveal{animation:none!important}}
+.badge.sell{background:#FFE7A8;color:#6B4A00;font-family:var(--f-body,inherit);font-weight:800;letter-spacing:.02em;vertical-align:middle;margin-left:4px}
+.save{display:inline-block;margin-top:4px;color:var(--ok);font-weight:800;font-size:13px}
+.ph .ribbon{position:absolute;z-index:2;right:10px;top:10px;background:#FFD45C;color:#4A3300;font-weight:800;font-size:12px;padding:4px 9px;border-radius:999px;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.upsell{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#FFF6DD,#FFFBEF);border:1.5px solid #F3D88A;border-radius:18px;padding:14px}
+.upsell>svg{width:24px;height:24px;color:#9A6A00;flex:none}
+.upsell .o-main b{font-family:var(--f-head);font-weight:600;font-size:15.5px}
+.upsell .o-main span{font-size:13.5px;color:var(--muted)}
+.upsell .btn{flex:none;background:var(--navy);color:#fff}
+.upsell.month{width:100%;text-align:left;background:linear-gradient(135deg,#E3F3EB,#F4FBF7);border-color:#B9E0CB}
+.upsell.month>svg{color:var(--ok)}
+.svc .save{margin-top:2px}
+.o-main .save,.svc .save{color:var(--ok)!important;font-weight:800}
 </style>
 </head>
 <body>
@@ -638,11 +679,19 @@ function priceLabel(svc,size){
   if(svc.kind==="monthly")return R(+svc.price+4*ex);
   return R(+svc.price+ex);
 }
+/* Sales helpers: badges, monthly savings and the upgrade offered at checkout (set per service in the database). */
+const svcById=id=>S.services.find(s=>s.id===id);
+const monthlySaving=s=>{const o=s&&s.kind==="monthly"&&!s.custom&&s.compare_to&&svcById(s.compare_to);return o?Math.max(0,4*(+o.price)-(+s.price)):0};
+const bestSaving=()=>Math.max(0,...S.services.filter(s=>s.active).map(monthlySaving));
+const badgeHTML=s=>s&&s.badge?`<span class="badge sell">${esc(s.badge)}</span>`:"";
+const firstLine=t=>String(t||"").split(/(?<=\.)\s/)[0];
+const upgradeFor=s=>{const t=s&&s.kind==="once"&&s.upgrade_to&&svcById(s.upgrade_to);return t&&t.active&&!t.custom&&+t.price>+s.price?t:null};
 function serviceList(selectable,size){
   const groups=[["once","Once-off washes"],["monthly","Monthly packages"]];
   return groups.map(([k,t])=>{const L=S.services.filter(s=>s.kind===k&&(s.active||isAdmin()));if(!L.length)return"";
     return `<div class="stack" style="gap:8px"><h3>${t}</h3>${k==="monthly"?`<p class="small muted">4 washes in one month, on the same day and time each week. A package doesn't renew by itself.</p>`:""}<div class="svc">${L.map(s=>{
-      const inner=`<span class="nm"><span>${esc(s.name)}</span><span class="pr">${priceLabel(s,size)}</span></span><span class="ds">${esc(s.description)}</span>`;
+      const sv=monthlySaving(s);
+      const inner=`<span class="nm"><span>${esc(s.name)} ${badgeHTML(s)}</span><span class="pr">${priceLabel(s,size)}</span></span><span class="ds">${esc(s.description)}</span>${sv?`<span class="save">Save R${sv.toFixed(0)} a month</span>`:""}`;
       return selectable?`<button type="button" data-svc="${s.id}" aria-pressed="${S.book&&S.book.svc===s.id}">${inner}</button>`:`<div class="item">${inner}</div>`}).join("")}</div></div>`}).join("");
 }
 function sizeTable(){const e=setts().size_extra||{};return `<table><tbody>${Object.entries(SIZES).map(([k,l])=>`<tr><td>${l}</td><td class="n">${+e[k]?"+ R"+(+e[k]).toFixed(0)+" per wash":"Standard price"}</td></tr>`).join("")}</tbody></table>`}
@@ -715,7 +764,16 @@ function bookingCard(b,opts={}){
 /* ================= views ================= */
 const VIEWS={},AFTER={};
 
-const PHOTO=s=>/inside|vacuum|interior/i.test(s.name)?"img/interior.webp":"img/exterior.webp";
+/* Free photos from Unsplash (Unsplash License: free for business use). Loaded from Unsplash and saved on the phone after the first visit. */
+const U_PH=id=>w=>`https://images.unsplash.com/${id}?w=${w}&h=${Math.round(w*.6)}&fit=crop&auto=format&q=70`;
+const PHOTOS={
+  washdry:{src:U_PH("photo-1683647115932-b33455fe6a3e"),tone:"teal",by:"Lorenzo Hamers"},
+  full:{src:U_PH("photo-1694025893767-9a212606fbc5"),tone:"navy",by:"lucas clarysse"},
+  inside:{src:U_PH("photo-1771491237209-b89bc7290588"),tone:"amber",by:"Luay Barani"},
+  vacuum:{src:U_PH("photo-1672658074730-c09b9e739cf6"),tone:"plum",by:"@grebenyev"},
+  monthly:{src:U_PH("photo-1665326278095-6526bd0990d8"),tone:"navy",by:"Winston Tjia"}};
+const photoKey=s=>/vac/i.test(s.name)?"vacuum":/inside|interior/i.test(s.name)?"inside":/dry|exterior|shine/i.test(s.name)?"washdry":"full";
+const phImg=(k,w)=>`<img class="ph-i" src="${PHOTOS[k].src(w)}" srcset="${PHOTOS[k].src(w)} 1x, ${PHOTOS[k].src(w*2)} 2x" alt="" loading="lazy" decoding="async" crossorigin="anonymous">`;
 VIEWS.home=()=>{
   if(!S.me){const once=S.services.filter(s=>s.kind==="once"&&s.active),mon=S.services.filter(s=>s.kind==="monthly"&&s.active);
     const minMon=mon.length?Math.min(...mon.map(s=>+s.price)):null;
@@ -731,8 +789,9 @@ VIEWS.home=()=>{
     ${FROM_FF||PROMO_IN?`<div class="welcome">${fi("gift")}<div><b>Welcome from Fuel Friend.</b><p>${PROMO_IN?`Your code <b>${esc(PROMO_IN)}</b> gives you 10% off your first once-off wash. It's filled in for you when you book.`:"Book your first wash: you create a free account as you go."}</p></div></div>`:""}
     ${api?"":notConnected()}
     <section class="stack" style="gap:12px"><div class="sec-h"><h2>Our washes</h2><a href="#/prices">All prices</a></div>
-      <div class="rail">${once.map(s=>`<a class="tile" href="#/book" data-pick="${s.id}"><span class="ph" style="background-image:url(${PHOTO(s)})"></span><span class="tx"><b>${esc(s.name)}</b><span>${esc(s.description)}</span><span class="pr">${priceLabel(s)}</span></span></a>`).join("")}</div>
-      ${minMon!=null?`<a class="card pkg" href="#/prices"><span class="ph" style="background-image:url(img/interior.webp)"></span><span><b>Monthly packages</b><br><span class="small muted">4 washes a month, on the same day and time each week. From R${minMon.toFixed(0)}.</span></span></a>`:""}
+      <div class="rail">${once.map((s,i)=>{const k=photoKey(s);return `<a class="tile reveal" style="--d:${i*70}ms" href="#/book" data-pick="${s.id}"><span class="ph tone-${PHOTOS[k].tone}">${phImg(k,420)}<span class="tag">${priceLabel(s)}</span>${s.badge?`<span class="ribbon">${esc(s.badge)}</span>`:""}</span><span class="tx"><b>${esc(s.name)}</b><span>${esc(s.description)}</span><span class="go">Book this ${fi("back").replace("<svg","<svg class=\"arr\"")}</span></span></a>`}).join("")}</div>
+      ${minMon!=null?`<a class="pkg2 reveal" href="#/prices"><span class="ph tone-navy">${phImg("monthly",720)}</span><span class="pk-tx"><span class="tag">${bestSaving()?`Save up to R${bestSaving().toFixed(0)} a month`:`From R${minMon.toFixed(0)}`}</span><b>Monthly packages</b><span>A wash every week on your day and time, for less than booking each one.</span></span></a>`:""}
+      <p class="tiny muted">Photos: ${Object.values(PHOTOS).map(p=>esc(p.by)).join(", ")} on <a href="https://unsplash.com/?utm_source=washlys&amp;utm_medium=referral" target="_blank" rel="noopener">Unsplash</a></p>
     </section>
     <div class="card"><h2>How it works</h2><div class="steps3">
       <div><span class="si">${fi("cal")}</span><span><b>Book in a minute</b><span class="small">Pick a wash, a day and a free time.</span></span></div>
@@ -1017,7 +1076,7 @@ function stepSvc(b){
     <div class="seg" role="group" aria-label="Type of booking"><button type="button" data-kind="once" aria-pressed="${b.kind==="once"}">Once-off wash</button><button type="button" data-kind="monthly" aria-pressed="${b.kind==="monthly"}">Monthly package</button></div>
     ${b.kind==="monthly"?`<p class="small muted">4 washes in one month, on the same day and time each week. A package doesn't renew by itself.</p>`:""}
     ${S.me?"":`<div class="fl"><span class="lbl">Your vehicle</span><div class="seg sizes" role="group" aria-label="Vehicle size">${Object.entries(SIZES).map(([k,l])=>`<button type="button" data-size="${k}" aria-pressed="${b.size===k}">${l.replace(" / ","/")}${extraFor(k)?`<small>+R${extraFor(k)} a wash</small>`:`<small>Standard</small>`}</button>`).join("")}</div></div>`}
-    <div class="opts">${list.map(s=>`<button type="button" class="opt" data-svc="${s.id}" aria-pressed="${b.svc===s.id}"><span class="radio"></span><span class="o-main"><b>${esc(s.name)}</b>${GENERIC_PKG.test(s.description||"")?"":`<span>${esc(s.description)}</span>`}</span><span class="o-pr">${priceLabel(s,b.size)}</span></button>`).join("")||`<p class="muted">Nothing here at the moment.</p>`}</div>
+    <div class="opts">${list.map(s=>`<button type="button" class="opt" data-svc="${s.id}" aria-pressed="${b.svc===s.id}"><span class="radio"></span><span class="o-main"><b>${esc(s.name)} ${badgeHTML(s)}</b>${GENERIC_PKG.test(s.description||"")?"":`<span>${esc(s.description)}</span>`}${monthlySaving(s)?`<span class="save">Save R${monthlySaving(s).toFixed(0)} a month</span>`:""}</span><span class="o-pr">${priceLabel(s,b.size)}</span></button>`).join("")||`<p class="muted">Nothing here at the moment.</p>`}</div>
     ${S.me?`<p class="small muted">Prices for your ${esc(S.me.car||"car")} (${(SIZES[b.size]||"").toLowerCase()}). <a href="#/account">Change</a></p>`:""}
     ${b.promo&&b.kind==="once"?`<div class="hint">${fi("gift")}<span>Your code <b>${esc(b.promo)}</b> is saved and applied when you confirm.</span></div>`:""}`;
 }
@@ -1074,6 +1133,7 @@ function stepReview(b,svc){
         ${est.credit?`<div class="line"><span>Your credit</span><span>−${R(est.credit)}</span></div>`:""}
         <div class="line total"><span>${once&&b.promo&&est.payable?"To pay, before the code":"To pay"}</span><span>${R(est.payable)}</span></div>`}
     </div></div>
+    ${(()=>{const t=upgradeFor(svc);if(!t)return "";const more=(+t.price)-(+svc.price);return `<div class="upsell">${fi("gift")}<span class="o-main"><b>Make it ${esc(t.name)} for R${more.toFixed(0)} more?</b><span>${esc(firstLine(t.description))}</span></span><button type="button" class="btn sm" data-upgrade="${t.id}">Upgrade</button></div>`})()}
     ${once?(b.promo||b.showPromo?`<label>Promo code<input name="promo" value="${esc(b.promo)}" placeholder="e.g. FUELFRIEND10" autocapitalize="characters" autocorrect="off" spellcheck="false"></label>${b.promo?`<button type="button" class="linkbtn small" data-promo-clear style="align-self:flex-start">Remove code</button>`:""}`
       :`<button type="button" class="linkbtn" data-promo-open style="align-self:flex-start">Have a promo code?</button>`):""}
     ${showPay?`<div class="fl"><span class="sub">How would you like to pay?</span><div class="opts">
@@ -1102,10 +1162,11 @@ function flowAfter(){
   /* The top bar (back arrow and X) sits outside the form, so it gets the same tap handler. */
   const head=$(".flowhead");if(head)head.onclick=e=>f.onclick(e);
   f.onclick=e=>{
-    const t=e.target.closest("[data-svc],[data-kind],[data-size],[data-day],[data-slot],[data-pay],[data-flow],[data-flow-go],[data-promo-open],[data-promo-clear]");if(!t)return;
+    const t=e.target.closest("[data-svc],[data-kind],[data-size],[data-day],[data-slot],[data-pay],[data-flow],[data-flow-go],[data-promo-open],[data-promo-clear],[data-upgrade]");if(!t)return;
     const d=t.dataset;keep();
     if(d.flow==="close"){S.flowPush=0;go("home");return}
     if(d.flow==="back"){const i=L.indexOf(step);if(S.flowPush>0){S.flowPush--;history.back()}else location.replace("#/book/"+(i>1?L[i-1]:""));return}
+    if(d.upgrade){const t=svcById(+d.upgrade);if(t){tapFeel();b.svc=t.id;saveDraft();toast(`Upgraded to ${t.name}`);redraw()}return}
     if(d.flowGo){S.flowPush=(S.flowPush||0)+1;go("book"+(d.flowGo==="svc"?"":"/"+d.flowGo));return}
     if(d.svc){tapFeel();const id=+d.svc;if(b.svc!==id){b.svc=id;b.slot=null}saveDraft();redraw();setTimeout(next,170);return}
     if(d.kind){b.kind=d.kind}
@@ -1187,9 +1248,14 @@ VIEWS.booked=()=>{
   const rows=S.booked;if(!rows||!rows.length)return VIEWS.home();
   const tot=rows.every(r=>r.price!=null)?rows.reduce((a,r)=>a+ +r.price,0):null,paid=rows.every(r=>r.pay_status==="paid");
   const msg=tot==null?"We'll confirm the price with you before the first wash.":tot===0?"This one's free. Enjoy!":paid?`Paid with your credit (${R(tot)}).`:`Total ${R(tot)}, paid on the day.`;
-  return successScreen("You're booked!",(rows.length>1?"Your 4 washes are booked. ":"")+msg,rows);
+  /* Once-off booking: suggest the weekly package that saves the most for that wash. */
+  let tip="";const r0=rows[0];
+  if(r0.kind==="once"){const m=S.services.filter(x=>x.active&&monthlySaving(x)>0).sort((a,b)=>(b.compare_to===r0.service_id)-(a.compare_to===r0.service_id)||monthlySaving(b)-monthlySaving(a))[0];
+    if(m)tip=`<div class="upsell month">${fi("cal")}<span class="o-main"><b>Every week for less</b><span>${esc(m.name)} saves you R${monthlySaving(m).toFixed(0)} a month. ${esc(firstLine(m.description))}</span></span><button type="button" class="btn sm" data-monthly="${m.id}">See it</button></div>`}
+  return successScreen("You're booked!",(rows.length>1?"Your 4 washes are booked. ":"")+msg,rows).replace('<div class="acts">',tip+'<div class="acts">');
 };
-AFTER.booked=()=>{const bt=document.querySelector("[data-ics]");if(bt&&S.booked)bt.onclick=()=>downloadIcs(S.booked)};
+AFTER.booked=()=>{const bt=document.querySelector("[data-ics]");if(bt&&S.booked)bt.onclick=()=>downloadIcs(S.booked);
+  const mo=document.querySelector("[data-monthly]");if(mo)mo.onclick=()=>{const m=svcById(+mo.dataset.monthly);if(!m)return;flowState();Object.assign(S.book,{kind:"monthly",svc:m.id,date:null,slot:null});saveDraft();S.flowPush=0;go("book/when")}};
 
 /* Admin books for a customer on one page (quicker for the business); customers get the step-by-step flow. */
 VIEWS.book=(arg)=>!api?notConnected():isAdmin()?legacyBook(arg):flowView(arg);
@@ -1426,9 +1492,13 @@ function serviceForm(s){return `<form class="card" data-svcform="${s.id}" novali
   <label>Order on the list<input name="sort" type="number" step="1" value="${s.sort}"></label>
   <label style="grid-column:1/-1">What's included<input name="description" value="${esc(s.description)}"></label>
   <label>Shown to customers<select name="active"><option value="true" ${s.active?"selected":""}>Yes</option><option value="false" ${!s.active?"selected":""}>No, hidden</option></select></label>
+  ${S.services.some(x=>"badge" in x)?`<label>Badge (optional)<input name="badge" value="${esc(s.badge||"")}" placeholder="e.g. Most popular"></label>
+  <label>Monthly package: compare with<select name="compare_to"><option value="">Don't show a saving</option>${S.services.filter(x=>x.kind==="once").map(x=>`<option value="${x.id}" ${s.compare_to===x.id?"selected":""}>4 × ${esc(x.name)}</option>`).join("")}</select></label>
+  <label>Once-off wash: offer an upgrade to<select name="upgrade_to"><option value="">No upgrade offer</option>${S.services.filter(x=>x.kind==="once"&&x.id!==s.id).map(x=>`<option value="${x.id}" ${s.upgrade_to===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></label>`:""}
   </div><div class="row"><button class="btn sm" type="submit">${s.id?"Save":"Add service"}</button><span class="small" data-msg></span></div></form>`}
 AFTER.services=()=>{document.querySelectorAll("[data-svcform]").forEach(f=>f.onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(f)),m=f.querySelector("[data-msg]");
   const s={name:v.name.trim(),kind:v.kind,price:+v.price,custom:v.custom==="true",price_max:v.price_max===""?null:+v.price_max,description:v.description.trim(),active:v.active==="true",sort:+v.sort||0};
+  if("badge" in v){s.badge=v.badge.trim()||null;s.compare_to=s.kind==="monthly"&&v.compare_to?+v.compare_to:null;s.upgrade_to=s.kind==="once"&&v.upgrade_to?+v.upgrade_to:null}
   if(!s.name){m.className="small err";m.textContent="Add a name.";return}if(s.custom&&!(s.price_max>=s.price)){m.className="small err";m.textContent="For a range, set 'Up to' to at least the price.";return}
   if(f.dataset.svcform)s.id=+f.dataset.svcform;
   try{await api.saveService(s);S.services=await api.services();toast("Saved");render()}catch(x){m.className="small err";m.textContent=x.message}})};
@@ -1693,9 +1763,10 @@ AFTER.fuel=async()=>{await loadFuel();const box=$("#fuelBox");if(!box)return;
   fuelDraw(false)};
 
 /* Shown until the database is connected (same as the price list in the database setup). */
-const PRICE_LIST=[["Wash & Dry","once",75,null,"Outside wash and tyre polish"],["Full Wash","once",120,null,"Outside wash, tyre polish, vacuum, dash shine and air freshener"],["Inside Wash","once",60,null,"Vacuum, dash shine and air freshener"],["Vacuuming","once",40,null,"Vacuum only"],
-  ["Basic Wash Monthly Package","monthly",270,null,"4 washes a month, same day and time each week"],["Wash X Inside Package","monthly",250,null,"4 washes a month, same day and time each week"],["Full Wash Package","monthly",420,null,"4 washes a month, same day and time each week"],["Custom Package","monthly",150,420,"4 washes a month, made up the way you want. We confirm the price with you (R150 to R420)."]]
-  .map(([name,kind,price,price_max,description],i)=>({id:i+1,name,kind,price,price_max,custom:price_max!=null,description,active:true,sort:i+1}));
+const PRICE_LIST=[["The Full Washly","once",120,null,"Inside and out: hand wash, tyre shine, vacuum, dash shine and a fresh scent. R15 less than booking them separately.","Most popular",null,null],
+  ["Exterior Shine","once",75,null,"Hand wash, dry and tyre shine. Ready to be seen.",null,null,1],["Interior Refresh","once",60,null,"Vacuum, dash shine and a fresh scent. Feels like a new car inside.",null,null,1],["Quick Vac","once",40,null,"Seats, mats and carpets vacuumed. In and out in minutes.",null,null,3],
+  ["Full Washly Weekly","monthly",420,null,"The Full Washly every week, on your day and time. Always clean, never think about it.","Best value",1,null],["Weekly Shine","monthly",270,null,"An Exterior Shine every week, on your day and time.",null,2,null],["Wash X Inside Package","monthly",250,null,"4 washes a month, same day and time each week",null,null,null],["Build Your Own","monthly",150,420,"Pick what you want done each week. We'll confirm the price with you (R150 to R420).",null,null,null]]
+  .map(([name,kind,price,price_max,description,badge,compare_to,upgrade_to],i)=>({id:i+1,name,kind,price,price_max,custom:price_max!=null,description,badge,compare_to,upgrade_to,active:true,sort:i+1}));
 /* ================= start ================= */
 (async function start(){
   try{

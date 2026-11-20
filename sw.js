@@ -3,10 +3,10 @@
    - Pages and settings are fetched fresh when there's a connection (so updates show up straight away),
      and the saved copy is used only when offline.
    - Bookings, accounts and prices (Supabase) are never cached: they always come live from the database. */
-const VERSION = "washlys-v2";
+const VERSION = "washlys-v3";
 const SHELL = ["./", "./index.html", "./config.js", "./vendor/supabase.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-32.png",
-  "./img/hero.webp", "./img/exterior.webp", "./img/interior.webp"];
+  "./img/hero.webp"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -23,7 +23,8 @@ self.addEventListener("fetch", e => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   const sameOrigin = url.origin === self.location.origin;
-  if (!sameOrigin && !isFuel(url)) return;            // Supabase, fonts etc.: straight to the network
+  const isPhoto = url.hostname === "images.unsplash.com";  // photos: saved on the phone after the first visit
+  if (!sameOrigin && !isFuel(url) && !isPhoto) return;            // Supabase, fonts etc.: straight to the network
 
   const fresh = /\/$|\.html$|config\.js$|manifest\.webmanifest$/.test(url.pathname) || req.mode === "navigate" || isFuel(url);
   if (fresh) {                                         // network first, saved copy when offline
