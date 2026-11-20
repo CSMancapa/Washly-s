@@ -494,6 +494,15 @@ body{padding-bottom:calc(62px + env(safe-area-inset-bottom,0px))}
 .upsell.month>svg{color:var(--ok)}
 .svc .save{margin-top:2px}
 .o-main .save,.svc .save{color:var(--ok)!important;font-weight:800}
+.check{flex-direction:row!important;align-items:flex-start;gap:10px;font-weight:500;font-size:14.5px;line-height:1.4;cursor:pointer}
+.check input{width:22px;height:22px;min-height:0;margin:0;flex:none;accent-color:var(--teal);box-shadow:none}
+.refer{background:linear-gradient(135deg,#FFF6DD,#FFFFFF)}
+.refer>.between svg{width:26px;height:26px;color:#9A6A00}
+.codebox{display:flex;flex-direction:column;gap:2px;background:#fff;border:1.5px dashed #E5C877;border-radius:14px;padding:10px 14px}
+.codebox b{font-family:var(--f-head);font-size:22px;letter-spacing:.06em}
+.alertcard{flex-direction:row!important;align-items:center;gap:12px;text-decoration:none;color:inherit}
+.alertcard>svg{width:24px;height:24px;color:var(--teal-d);flex:none}
+.alertcard>span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:2px}
 </style>
 </head>
 <body>
@@ -571,7 +580,12 @@ function supaApi(url,key){
     async profiles(){return chk(await sb.from("profiles").select("*").order("name"))},
     async updateBooking(id,f){return chk(await sb.from("bookings").update(f).eq("id",id).select().single())},
     async saveService(s){const {id,...f}=s;return id?chk(await sb.from("services").update(f).eq("id",id).select().single()):chk(await sb.from("services").insert(f).select().single())},
-    async saveSettings(f){return chk(await sb.from("settings").update(f).eq("id",1).select().single())}
+    async saveSettings(f){return chk(await sb.from("settings").update(f).eq("id",1).select().single())},
+    /* marketing: friend codes, unsubscribe links, fuel price alerts */
+    async friendCode(){return chk(await sb.rpc("my_friend_code"))},
+    async unsubscribe(token){return chk(await sb.rpc("unsubscribe",{p_token:token}))},
+    async subscribeAlerts(email,city,consent){return chk(await sb.rpc("subscribe_fuel_alerts",{p_email:email,p_city:city||"",p_consent:consent||""}))},
+    async fuelAlerts(){return chk(await sb.from("fuel_alerts").select("*").order("created_at",{ascending:false}))}
   };
 }
 const rawApi=window.__MOCK_API||(CFG.supabaseUrl&&CFG.supabaseAnonKey&&window.supabase?supaApi(CFG.supabaseUrl,CFG.supabaseAnonKey):null);
@@ -591,6 +605,19 @@ const PROMO_IN=(qs.get("promo")||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
 const FROM_FF=/fuel/i.test(qs.get("from")||"")||!!PROMO_IN;
 try{if(PROMO_IN)sessionStorage.setItem("washlys-promo",PROMO_IN)}catch(e){}
 const promoSaved=()=>{try{return sessionStorage.getItem("washlys-promo")||""}catch(e){return PROMO_IN}};
+/* A friend's link (?ref=CODE) fills in their friend code. */
+const REF_IN=(qs.get("ref")||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+try{if(REF_IN&&!PROMO_IN)sessionStorage.setItem("washlys-promo",REF_IN)}catch(e){}
+/* Where this visitor came from (the link's ?from=, or the site that sent them). The first one is kept on the phone
+   and saved on their account when they sign up, so the admin can see which marketing works. */
+const SRC_NOW=(()=>{const f=(qs.get("from")||qs.get("utm_source")||"").toLowerCase(),r=document.referrer||"";
+  if(/fuel/.test(f))return "Fuel Friend";if(REF_IN||/^(ref|referral|friend)$/.test(f))return "Referral";
+  if(/insta|^ig$/.test(f)||/instagram\./.test(r))return "Instagram";if(/facebook|^fb$/.test(f)||/facebook\.|fb\.com|fb\.me/.test(r))return "Facebook";
+  if(/mail/.test(f))return "Email";if(/google/.test(f)||/google\./.test(r))return "Google";if(/tiktok/.test(f)||/tiktok\./.test(r))return "TikTok";
+  if(f)return f.replace(/[^a-z0-9 ]/g,"").slice(0,30).replace(/^./,c=>c.toUpperCase());return ""})();
+try{if(SRC_NOW&&!localStorage.getItem("washlys-src"))localStorage.setItem("washlys-src",SRC_NOW)}catch(e){}
+const leadSource=()=>{try{return localStorage.getItem("washlys-src")||SRC_NOW||"Direct"}catch(e){return SRC_NOW||"Direct"}};
+const OFFERS_BOX=`<label class="check"><input type="checkbox" name="offers"><span>Send me offers and fuel price alerts by email. Optional: you can unsubscribe at any time.</span></label>`;
 const isAdmin=()=>!!(S.me&&S.me.is_admin);
 const setts=()=>S.settings||{slots:["08:00","10:00","12:00","14:00","16:00"],open_days:[1,2,3,4,5,6],days_ahead:14,loyalty_every:10,size_extra:{sedan:0,suv:25,minibus:60}};
 const extraFor=size=>+((setts().size_extra||{})[size]||0);
@@ -634,7 +661,7 @@ function navItems(){
 function route(){
   const h=(location.hash||"#/").replace(/^#\/?/,"");const parts=h.split("/"),v=parts[0],arg=parts.slice(1).join("/");
   let view=v||(isAdmin()?"today":"home");
-  const allowed=new Set(navItems().map(x=>x[0]).concat(["signup","login","reset","newpass","prices","home","book"],S.me?["paid","booked"]:[],isAdmin()?["customer"]:[]));
+  const allowed=new Set(navItems().map(x=>x[0]).concat(["signup","login","reset","newpass","prices","home","book","unsubscribe","alerts"],S.me?["paid","booked"]:[],isAdmin()?["customer"]:[]));
   if(!allowed.has(view))view=S.me?(isAdmin()?"today":"home"):(["book","washes","account"].includes(view)?"login":"home");
   if(isAdmin()&&view==="home")view="today";
   if(S.recovery)view="newpass";
@@ -786,7 +813,9 @@ VIEWS.home=()=>{
       <p class="small" style="opacity:.9">You create a free account as you book. It's not a subscription: you only pay for the washes you book.</p>
     </section>
     ${installCard()}
-    ${FROM_FF||PROMO_IN?`<div class="welcome">${fi("gift")}<div><b>Welcome from Fuel Friend.</b><p>${PROMO_IN?`Your code <b>${esc(PROMO_IN)}</b> gives you 10% off your first once-off wash. It's filled in for you when you book.`:"Book your first wash: you create a free account as you go."}</p></div></div>`:""}
+    ${REF_IN?`<div class="welcome">${fi("gift")}<div><b>A friend sent you R30 off.</b><p>Your friend's code <b>${esc(REF_IN)}</b> takes R30 off your first once-off wash. It's filled in for you when you book.</p></div></div>`
+      :/fuel/i.test(qs.get("from")||"")?`<div class="welcome">${fi("gift")}<div><b>Welcome from Fuel Friend.</b><p>${PROMO_IN?`Your code <b>${esc(PROMO_IN)}</b> gives you 10% off your first once-off wash. It's filled in for you when you book.`:"Book your first wash: you create a free account as you go."}</p></div></div>`
+      :PROMO_IN?`<div class="welcome">${fi("gift")}<div><b>Your code is saved.</b><p>Code <b>${esc(PROMO_IN)}</b> is filled in for you when you book your first wash.</p></div></div>`:""}
     ${api?"":notConnected()}
     <section class="stack" style="gap:12px"><div class="sec-h"><h2>Our washes</h2><a href="#/prices">All prices</a></div>
       <div class="rail">${once.map((s,i)=>{const k=photoKey(s);return `<a class="tile reveal" style="--d:${i*70}ms" href="#/book" data-pick="${s.id}"><span class="ph tone-${PHOTOS[k].tone}">${phImg(k,420)}<span class="tag">${priceLabel(s)}</span>${s.badge?`<span class="ribbon">${esc(s.badge)}</span>`:""}</span><span class="tx"><b>${esc(s.name)}</b><span>${esc(s.description)}</span><span class="go">Book this ${fi("back").replace("<svg","<svg class=\"arr\"")}</span></span></a>`}).join("")}</div>
@@ -813,10 +842,27 @@ VIEWS.home=()=>{
     ${st.every?`<div class="card"><div class="between"><h2>Loyalty card</h2><span class="small muted">Every ${st.every}th once-off wash is free</span></div>
       <div class="stamps">${Array.from({length:st.every},(_,i)=>`<span class="${i<st.inCard?"on":""} ${i===st.every-1?"gift":""}">${i===st.every-1?"Free":i+1}</span>`).join("")}</div>
       <p class="small muted">${st.inCard===st.every-1?"Your next once-off wash is free!":`${st.every-1-st.inCard} more once-off wash${st.every-1-st.inCard===1?"":"es"} until a free one.`}</p></div>`:""}
+    <div id="referBox"></div>
     ${fuelTeaser()}
   </div>`;
 };
-AFTER.home=()=>{S.done=null;fuelTeaserFill()};
+AFTER.home=()=>{S.done=null;fuelTeaserFill();drawRefer($("#referBox"))};
+/* Refer a friend: the customer's own code and link. Hidden until the database has the feature. */
+async function drawRefer(box){
+  if(!box||!S.me||isAdmin()||!api.friendCode)return;
+  let r;try{r=await api.friendCode()}catch(e){return}
+  if(!r||!r.code||!document.contains(box))return;
+  const link=`${location.origin}${location.pathname}?ref=${encodeURIComponent(r.code)}`;
+  box.innerHTML=`<div class="card refer"><div class="between"><h2>Give R30, get R30</h2>${fi("gift")}</div>
+    <p>Share your link. Your friend gets <b>R30 off</b> their first wash, and you get <b>R30 credit</b> once it's done.</p>
+    <div class="codebox"><span class="small muted">Your friend code</span><b>${esc(r.code)}</b></div>
+    <div class="row"><button type="button" class="btn" data-share>Share my link</button><button type="button" class="btn ghost" data-copy>Copy link</button></div>
+    <p class="small muted">${+r.friends?`${r.friends} friend${r.friends===1?"":"s"} washed so far · R${(+r.earned).toFixed(0)} earned`:+r.joined?`${r.joined} friend${r.joined===1?" has":"s have"} joined. Your R30 comes after their first wash.`:"No friends yet. Your first R30 is one share away."}</p></div>`;
+  const copy=async()=>{try{await navigator.clipboard.writeText(link);toast("Link copied")}catch(e){prompt("Copy your link:",link)}};
+  box.querySelector("[data-copy]").onclick=copy;
+  box.querySelector("[data-share]").onclick=async()=>{const text="I use Washly's: they wash your car at home. Here's R30 off your first wash:";
+    if(navigator.share){try{await navigator.share({title:"Washly's: R30 off your first wash",text,url:link})}catch(e){}}else copy()};
+}
 
 VIEWS.prices=()=>`<div class="stack"><h1>Price list</h1><div class="card">${serviceList(false)}</div>
   <div class="card"><h2>Vehicle size, per wash</h2>${sizeTable()}</div><div class="card"><h2>Good to know</h2>${RULES}</div>
@@ -868,6 +914,7 @@ VIEWS.signup=()=>!api?notConnected():`<div class="center stack">
       <label>Registration (optional)<input name="reg" placeholder="e.g. HGF 123 EC" autocapitalize="characters" autocorrect="off" spellcheck="false"></label>
       <label>Vehicle size<select name="car_size">${Object.entries(SIZES).map(([k,l])=>`<option value="${k}">${l}${extraFor(k)?` (+R${extraFor(k)} per wash)`:""}</option>`).join("")}</select></label>
     </div>
+    ${OFFERS_BOX}
     <p class="tiny muted">We use your details only to do your washes and contact you about them. You can delete your account at any time in Account.</p>
     <p class="err" id="suErr" role="alert" hidden></p>
     <button class="btn" type="submit">Create my free account</button>
@@ -881,7 +928,7 @@ AFTER.signup=()=>{const f=$("#fSignup");if(!f)return;f.onsubmit=async e=>{e.prev
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email))return fail("Please check the email address.");
   if(String(v.password).length<8)return fail("Your password needs at least 8 characters.");
   const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Creating your account…";
-  try{const meta={name:v.name.trim(),cell:v.cell.trim(),address:v.address.trim(),suburb:v.suburb.trim(),car:v.car.trim(),reg:String(v.reg||"").trim().toUpperCase(),car_size:v.car_size,source:FROM_FF?"Fuel Friend":"App"};
+  try{const meta={name:v.name.trim(),cell:v.cell.trim(),address:v.address.trim(),suburb:v.suburb.trim(),car:v.car.trim(),reg:String(v.reg||"").trim().toUpperCase(),car_size:v.car_size,source:leadSource(),code:promoSaved(),marketing_ok:v.offers==="on"};
     const r=await api.signUp(v.email.trim(),v.password,meta);
     if(!r.session){$("#view").innerHTML=`<div class="center card"><h1>Check your email</h1><p>We've sent a link to <b>${esc(v.email)}</b>. Tap it to confirm your account, then log in here.</p><a class="btn" href="#/login">Log in</a></div>`;return}
     S.session=r.session;await loadMe();S.done="Welcome! Your free account is ready.";go(loadDraft()&&loadDraft().svc?"book/review":promoSaved()?"book":"home");
@@ -1109,6 +1156,7 @@ function stepYou(b){
       <label>Car<input name="car" placeholder="e.g. VW Polo, red"></label>
       <label>Registration (optional)<input name="reg" placeholder="e.g. HGF 123 EC" autocapitalize="characters" autocorrect="off" spellcheck="false"></label>
     </div>
+    ${OFFERS_BOX}
     <p class="tiny muted">Vehicle size: ${SIZES[b.size]}. We use your details only to do your washes and contact you about them. You can delete your account at any time.</p>
     <p class="errbox" id="bkErr" role="alert" hidden></p>
     <p class="small">Already have an account? <a href="#/login">Log in</a>. Your booking is kept.</p>`;
@@ -1194,7 +1242,7 @@ async function flowSignup(f,btn,fail){
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email))return fail("Please check the email address.");
   if(String(v.password).length<8)return fail("Your password needs at least 8 characters.");
   btn.disabled=true;btn.textContent="Creating…";
-  try{const meta={name:v.name.trim(),cell:v.cell.trim(),address:b.address.trim(),suburb:"",car:v.car.trim(),reg:String(v.reg||"").trim().toUpperCase(),car_size:b.size,source:FROM_FF?"Fuel Friend":"App"};
+  try{const meta={name:v.name.trim(),cell:v.cell.trim(),address:b.address.trim(),suburb:"",car:v.car.trim(),reg:String(v.reg||"").trim().toUpperCase(),car_size:b.size,source:leadSource(),code:promoSaved(),marketing_ok:v.offers==="on"};
     const r=await api.signUp(v.email.trim(),v.password,meta);
     if(!r.session){b.resume=true;saveDraft();
       $(".step").innerHTML=`<h1>Check your email</h1><p>We've sent a link to <b>${esc(v.email)}</b>. Tap it to confirm your free account.</p><div class="hint">${fi("info")}<span>Your booking is saved on this phone. After you tap the link, you'll come straight back here to confirm it.</span></div>`;
@@ -1260,6 +1308,34 @@ AFTER.booked=()=>{const bt=document.querySelector("[data-ics]");if(bt&&S.booked)
 /* Admin books for a customer on one page (quicker for the business); customers get the step-by-step flow. */
 VIEWS.book=(arg)=>!api?notConnected():isAdmin()?legacyBook(arg):flowView(arg);
 AFTER.book=(arg)=>isAdmin()?legacyBookAfter(arg):flowAfter();
+
+/* ---------- unsubscribe link (from any marketing email) ---------- */
+VIEWS.unsubscribe=()=>`<div class="center stack" id="unsubBox"><h1>Unsubscribing…</h1><div class="skel" style="height:90px"></div></div>`;
+AFTER.unsubscribe=async(arg)=>{const box=$("#unsubBox");if(!box)return;
+  const okId=/^[0-9a-f-]{36}$/i.test(arg||"");let r="unknown";
+  if(okId&&api){try{r=await api.unsubscribe(arg)}catch(e){r="error"}}
+  box.innerHTML=r==="ok"?`<h1>You're unsubscribed</h1><div class="card"><p>You won't get offers or fuel price alerts from Washly's any more. Emails about your own bookings still come.</p><p class="small muted">Changed your mind? Switch offers back on in Account.</p><a class="btn" href="#/home">Back to Washly's</a></div>`
+    :`<h1>That link didn't work</h1><div class="card"><p>${r==="error"?"We couldn't reach Washly's just now. Please try again in a minute.":"This unsubscribe link isn't valid any more."} You can also switch offers off in Account, or email <a href="mailto:${esc(INFO_EMAIL)}">${esc(INFO_EMAIL)}</a>.</p><a class="btn" href="#/home">Back to Washly's</a></div>`};
+/* ---------- fuel price alerts sign-up (no account needed) ---------- */
+const ALERT_CITIES=["Gqeberha","Cape Town","Johannesburg","Pretoria","Durban","East London","Bloemfontein","Pietermaritzburg","Mbombela","George","Rustenburg","Somewhere else"];
+const ALERT_CONSENT="Yes, email me fuel price alerts and occasional Washly's offers. I can unsubscribe at any time.";
+VIEWS.alerts=()=>`<div class="center stack"><h1>Fuel price alerts</h1><p class="lead">Know before the price changes. We email you when the official petrol and diesel prices are announced, with whether to fill up now or wait. Free, about twice a month.</p>
+  <form class="card" id="fAlerts" novalidate>
+    <label>Email<input name="email" type="email" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" value="${esc(S.me?S.me.email:"")}"></label>
+    <label>Your city<select name="city">${ALERT_CITIES.map(c=>`<option ${c==="Gqeberha"?"selected":""}>${c}</option>`).join("")}</select></label>
+    <label class="check"><input type="checkbox" name="ok"><span>${ALERT_CONSENT}</span></label>
+    <p class="errbox" id="alErr" role="alert" hidden></p>
+    <button class="btn" type="submit">Send me fuel alerts</button>
+    <p class="tiny muted">We only use your email for these alerts and Washly's offers, and every email has an unsubscribe link.</p></form></div>`;
+AFTER.alerts=()=>{const f=$("#fAlerts");if(!f)return;f.onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(f)),er=$("#alErr");
+  const fail=m=>{er.textContent=m;er.hidden=false};
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v.email||"").trim()))return fail("Please check the email address.");
+  if(v.ok!=="on")return fail("Please tick the box so we may email you.");
+  if(!api)return fail("Sign-ups are opening soon.");
+  const b=f.querySelector("button[type=submit]");b.disabled=true;b.textContent="Signing you up…";
+  try{await api.subscribeAlerts(String(v.email).trim(),v.city,ALERT_CONSENT);
+    f.outerHTML=`<div class="card"><h2>You're on the list</h2><p>We'll email <b>${esc(String(v.email).trim())}</b> when fuel prices change. Meanwhile, Fuel Friend shows the cheapest diesel near you.</p><div class="row"><a class="btn" href="#/fuel">Open Fuel Friend</a><a class="btn ghost" href="#/home">Washly's home</a></div></div>`}
+  catch(x){fail(x.message);b.disabled=false;b.textContent="Send me fuel alerts"}}};
 
 /* ---------- my washes (customer) ---------- */
 VIEWS.washes=()=>{
@@ -1403,6 +1479,8 @@ async function logout(){await api.signOut();S.session=null;S.me=null;S.bookings=
 VIEWS.account=()=>{const m=S.me,ini=String(m.name||"?").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join("");return `<div class="stack"><h1>Your account</h1>
   <div class="card me"><span class="avatar" aria-hidden="true">${esc(ini)}</span><span><b>${esc(m.name)}</b><br><span class="small muted">Account ${esc(m.account_no||"")}${m.car?" · "+esc(m.car):""}</span></span></div>
   ${freeNote()}
+  <div id="referBox"></div>
+  ${"marketing_ok" in m?`<div class="card"><h2>Emails from Washly's</h2><label class="check"><input type="checkbox" id="ckOffers" ${m.marketing_ok?"checked":""}><span>Send me offers and fuel price alerts by email</span></label><p class="small muted">Emails about your own bookings always come. You can switch this off at any time.</p></div>`:""}
   ${+m.credit>0?`<div class="card"><h2>Credit: R${(+m.credit).toFixed(2)}</h2><p class="small muted">It's used automatically on your next booking.</p></div>`:""}
   <form class="card" id="fAcct" novalidate><h2>Your details</h2><div class="grid">
     <label>Full name<input name="name" value="${esc(m.name)}"></label><label>Cell number<input name="cell" type="tel" value="${esc(m.cell)}"></label>
@@ -1415,6 +1493,8 @@ VIEWS.account=()=>{const m=S.me,ini=String(m.name||"?").split(/\s+/).filter(Bool
   <div class="card"><h2>Log out or delete</h2><div class="row"><button class="btn ghost" data-act="logout">Log out</button><button class="btn warn" id="delAcct">Delete my account</button></div>
   <p class="small muted">Deleting your account removes your details and your wash history from Washly's for good, and cancels any washes you've booked.</p></div></div>`};
 AFTER.account=()=>{
+  drawRefer($("#referBox"));
+  const ck=$("#ckOffers");if(ck)ck.onchange=async()=>{try{S.me=await api.updateProfile(S.me.id,{marketing_ok:ck.checked});toast(ck.checked?"You'll get offers and fuel alerts":"No more offers by email")}catch(x){ck.checked=!ck.checked;toast(x.message)}};
   $("#fAcct").onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(e.target)),m=$("#acMsg");
     if(!v.name.trim()||String(v.cell).replace(/\D/g,"").length<9){m.className="err";m.textContent="Please add your name and a valid cell number.";return}
     try{v.reg=String(v.reg).toUpperCase();S.me=await api.updateProfile(S.me.id,{name:v.name.trim(),cell:v.cell.trim(),address:v.address.trim(),suburb:v.suburb.trim(),car:v.car.trim(),reg:v.reg.trim(),car_size:v.car_size});m.className="okmsg";m.textContent="Saved."}catch(x){m.className="err";m.textContent=x.message}};
@@ -1425,6 +1505,32 @@ AFTER.account=()=>{
 };
 
 /* ================= admin ================= */
+/* Where customers come from (last 30 days) and the email list for offers. */
+async function drawMarketing(){
+  const box=$("#mktBox");if(!box)return;
+  let alerts=[];try{alerts=api.fuelAlerts?await api.fuelAlerts():[]}catch(e){alerts=null}
+  if(!document.contains(box))return;
+  const since=addD(todayISO(),-30),cust=S.profiles.filter(p=>!p.is_admin);
+  const recent=cust.filter(p=>String(p.created_at||"").slice(0,10)>=since);
+  const count=list=>Object.entries(list.reduce((a,k)=>(a[k]=(a[k]||0)+1,a),{})).sort((x,y)=>y[1]-x[1]);
+  const first={};S.bookings.slice().sort((a,b)=>String(a.created_at||a.date).localeCompare(String(b.created_at||b.date))).forEach(b=>{if(b.status!=="cancelled"&&!first[b.customer_id])first[b.customer_id]=b});
+  const firstRecent=Object.values(first).filter(b=>String(b.created_at||b.date).slice(0,10)>=since);
+  const bySrc=count(recent.map(p=>p.source||"Direct")),byCode=count(firstRecent.map(b=>b.promo||"No code"));
+  const hasMkt=cust.some(p=>"marketing_ok" in p),yes=cust.filter(p=>p.marketing_ok),unsub=cust.filter(p=>!p.marketing_ok&&p.marketing_at);
+  const rows=(list,empty)=>list.length?`<table><tbody>${list.map(([k,n])=>`<tr><td>${esc(k)}</td><td class="n">${n}</td></tr>`).join("")}</tbody></table>`:`<p class="small muted">${empty}</p>`;
+  box.innerHTML=`<details class="card" ${recent.length?"open":""}><summary><b>Where customers come from</b> <span class="small muted">· last 30 days</span></summary>
+    <div class="grid" style="margin-top:12px"><div><h3>New accounts by source</h3>${rows(bySrc,"No new accounts yet.")}</div><div><h3>First bookings by code</h3>${rows(byCode,"No first bookings yet.")}</div></div>
+    ${hasMkt?`<h3 style="margin-top:12px">Email list</h3><p class="small">${yes.length} customer${yes.length===1?"":"s"} said yes to offers${alerts?` · ${alerts.filter(a=>a.active).length} fuel alert subscriber${alerts.filter(a=>a.active).length===1?"":"s"}`:""}${unsub.length?` · ${unsub.length} unsubscribed`:""}</p>
+    <div class="row"><button type="button" class="btn sm" id="dlList">Download email list (CSV)</button></div>
+    <p class="tiny muted">For Resend or any email tool. It has everyone who said yes plus existing customers who haven't unsubscribed, each with their own unsubscribe link: put it in every email. Leave out people who unsubscribed in your email tool too.</p>`
+    :`<p class="small muted">Run washlys-marketing.sql in Supabase to collect email consent and see the email list.</p>`}</details>`;
+  const dl=$("#dlList");if(dl)dl.onclick=()=>{
+    const base=`${location.origin}${location.pathname}#/unsubscribe/`,q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+    const lines=[["email","name","consent","source","since","unsubscribe_link"].join(",")];
+    cust.filter(p=>p.email&&(p.marketing_ok||!p.marketing_at)).forEach(p=>lines.push([p.email,p.name,p.marketing_ok?"said yes":"existing customer",p.source||"Direct",String(p.created_at||"").slice(0,10),base+p.unsub_token].map(q).join(",")));
+    (alerts||[]).filter(a=>a.active&&!cust.some(p=>p.email.toLowerCase()===a.email)).forEach(a=>lines.push([a.email,"","fuel alerts ("+a.city+")","Fuel alerts",String(a.created_at).slice(0,10),base+a.token].map(q).join(",")));
+    const url=URL.createObjectURL(new Blob([lines.join("\r\n")],{type:"text/csv"}));const el=document.createElement("a");el.href=url;el.download=`washlys-email-list-${todayISO()}.csv`;document.body.appendChild(el);el.click();el.remove();setTimeout(()=>URL.revokeObjectURL(url),4000)};
+}
 VIEWS.today=()=>{
   const t=todayISO(),all=S.bookings,f=S.adminFilter;
   const monthStart=t.slice(0,8)+"01",weekEnd=addD(t,7);
@@ -1451,11 +1557,11 @@ VIEWS.today=()=>{
 AFTER.today=()=>{$("#view").querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{S.adminFilter=b.dataset.filter;render()});
   const r=$("[data-act=refresh]");if(r)r.onclick=async()=>{await loadMe();render();toast("Up to date")}};
 
-VIEWS.customers=()=>`<div class="stack"><h1>Customers</h1><label>Search<input id="cFind" value="${esc(S.custQ)}" placeholder="Name, cell, account number, registration or suburb" autocomplete="off"></label><div id="cList" class="stack" style="gap:8px"></div></div>`;
-AFTER.customers=()=>{const i=$("#cFind");const draw=()=>{S.custQ=i.value;const q=i.value.trim().toLowerCase();
+VIEWS.customers=()=>`<div class="stack"><h1>Customers</h1><div id="mktBox"></div><label>Search<input id="cFind" value="${esc(S.custQ)}" placeholder="Name, cell, account number, registration or suburb" autocomplete="off"></label><div id="cList" class="stack" style="gap:8px"></div></div>`;
+AFTER.customers=()=>{drawMarketing();const i=$("#cFind");const draw=()=>{S.custQ=i.value;const q=i.value.trim().toLowerCase();
   const L=S.profiles.filter(p=>!p.is_admin&&[p.name,p.cell,p.account_no,p.reg,p.suburb,p.email].join(" ").toLowerCase().includes(q));
   $("#cList").innerHTML=`<p class="small muted">${L.length} customer${L.length===1?"":"s"}</p>`+L.map(p=>{const bs=S.bookings.filter(b=>b.customer_id===p.id),done=bs.filter(b=>b.status==="done");
-    return `<a class="bk" href="#/customer/${esc(p.id)}" style="text-decoration:none;color:inherit"><div class="between"><b>${esc(p.name||"(no name)")}</b><span class="tiny muted">${esc(p.account_no)}</span></div><span class="small muted">${esc([p.cell,p.suburb,p.car,p.reg].filter(Boolean).join(" · "))}</span><span class="small">${done.length} wash${done.length===1?"":"es"} done · ${bs.filter(b=>b.status==="booked").length} booked${p.source==="Fuel Friend"?' · <span class="badge sun">Fuel Friend</span>':""}</span></a>`}).join("")};
+    return `<a class="bk" href="#/customer/${esc(p.id)}" style="text-decoration:none;color:inherit"><div class="between"><b>${esc(p.name||"(no name)")}</b><span class="tiny muted">${esc(p.account_no)}</span></div><span class="small muted">${esc([p.cell,p.suburb,p.car,p.reg].filter(Boolean).join(" · "))}</span><span class="small">${done.length} wash${done.length===1?"":"es"} done · ${bs.filter(b=>b.status==="booked").length} booked${p.source&&!/^(Direct|App)$/.test(p.source)?` · <span class="badge sun">${esc(p.source)}</span>`:""}</span></a>`}).join("")};
   i.oninput=draw;draw()};
 
 VIEWS.customer=(id)=>{
@@ -1467,6 +1573,7 @@ VIEWS.customer=(id)=>{
     <form class="card" id="fCredit" novalidate><div class="between"><h2>Credit: R${(+p.credit||0).toFixed(2)}</h2><span class="small muted">Used automatically on their next booking</span></div>
       <div class="row"><label style="flex:1">Set credit to (R)<input name="credit" type="number" min="0" step="0.01" value="${(+p.credit||0).toFixed(2)}"></label><button class="btn sm ghost" type="submit">Save credit</button></div><p id="crMsg" role="status"></p></form>
     <div class="row small">${p.cell?`<a href="tel:${esc(p.cell.replace(/\s/g,""))}">Call ${esc(p.cell)}</a> · <a href="${waLink(p.cell)}" target="_blank" rel="noopener">WhatsApp</a> · `:""}<a href="mailto:${esc(p.email)}">${esc(p.email)}</a></div>
+    <p class="small muted">Came from: ${esc(p.source||"Direct")}${p.first_code?` · code ${esc(p.first_code)}`:""}${"marketing_ok" in p?` · offers by email: ${p.marketing_ok?"yes":"no"}`:""}</p>
     <form class="card" id="fCust" novalidate><h2>Details</h2><div class="grid">
       ${["name","cell","address","suburb","car","reg"].map(k=>`<label>${{name:"Name",cell:"Cell",address:"Address",suburb:"Suburb",car:"Car",reg:"Registration"}[k]}<input name="${k}" value="${esc(p[k])}"></label>`).join("")}
       <label>Vehicle size<select name="car_size">${Object.entries(SIZES).map(([k,l])=>`<option value="${k}" ${p.car_size===k?"selected":""}>${l}</option>`).join("")}</select></label></div>
@@ -1533,7 +1640,7 @@ function promoForm(p,isNew){return `<form class="bk" data-promo="${isNew?"":esc(
   <div class="chips">${[["first_only","First booking only"],["once_only","Discount on once-off washes only"],["pay_later","Event code: may pay on the day"],["active","Active"]].map(([k,l])=>`<label class="chip" style="flex-direction:row;gap:6px;color:var(--ink)"><input type="checkbox" name="${k}" ${p[k]?"checked":""} style="width:auto">${l}</label>`).join("")}</div>
   <div class="row"><button class="btn sm" type="submit">${isNew?"Add code":"Save"}</button><span class="small" data-msg></span></div></form>`}
 async function drawPromos(){const box=$("#promoList");if(!box)return;try{S.promos=await api.promos()||[]}catch(e){box.innerHTML=`<p class="err">${esc(e.message)}</p>`;return}
-  box.innerHTML=S.promos.map(p=>promoForm(p,false)).join("")+`<details><summary class="small" style="cursor:pointer;font-weight:700">Add a code</summary>${promoForm({code:"",pct:0,label:"",first_only:false,once_only:true,pay_later:true,active:true},true)}</details>`;
+  box.innerHTML=S.promos.filter(p=>!p.referrer).map(p=>promoForm(p,false)).join("")+`<details><summary class="small" style="cursor:pointer;font-weight:700">Add a code</summary>${promoForm({code:"",pct:0,label:"",first_only:false,once_only:true,pay_later:true,active:true},true)}</details>`;
   box.querySelectorAll("[data-promo]").forEach(f=>f.onsubmit=async e=>{e.preventDefault();const fd=new FormData(f),m=f.querySelector("[data-msg]"),isNew=!f.dataset.promo;
     const p={code:String(fd.get("code")).toUpperCase().replace(/[^A-Z0-9]/g,""),pct:Math.max(0,Math.min(100,+fd.get("pct")||0)),label:String(fd.get("label")||"").trim(),first_only:fd.has("first_only"),once_only:fd.has("once_only"),pay_later:fd.has("pay_later"),active:fd.has("active")};
     if(!p.code){m.className="small err";m.textContent="Add a code (letters and numbers).";return}
@@ -1652,6 +1759,7 @@ function fuelHTML(){
   </section>
   <div class="card"><h2>When to fill up</h2><p>${moveText()}</p>${f.note?`<p class="small muted">${esc(f.note)}</p>`:""}
     ${pre&&typeof f.d50==="number"?`<div class="sums"><div class="sum ${f.d50>0?"warm":"hi"}"><span>Diesel</span><b>${f.d50>0?"Fill up before":"Wait until"} ${when(f.effective)}</b></div><div class="sum ${f.p95>0?"warm":"hi"}"><span>Petrol</span><b>${f.p95>0?"Fill up before":"Wait until"} ${when(f.effective)}</b></div></div>`:""}</div>
+  <a class="card alertcard" href="#/alerts">${fi("info")}<span><b>Get fuel price alerts by email</b><span class="small muted">Free, about twice a month. Know before prices change.</span></span><span class="btn sm">Sign up</span></a>
   <div class="card" id="fDet"><h2>Is the cheaper station worth the drive?</h2>
     <div class="grid2">
       <label>Usual station (R/L)<input id="dNear" type="number" inputmode="decimal" step="0.01" min="0" value="${(located?nearest.price:c.median||0).toFixed(2)}"></label>
