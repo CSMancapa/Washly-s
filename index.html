@@ -1765,7 +1765,7 @@ AFTER.fuel=async()=>{await loadFuel();const box=$("#fuelBox");if(!box)return;
 /* Shown until the database is connected (same as the price list in the database setup). */
 const PRICE_LIST=[["The Full Washly","once",150,null,"Inside and out: hand wash, tyre shine, vacuum, dash shine and a fresh scent. R40 less than booking them separately.","Most popular",null,null],
   ["Exterior Shine","once",95,null,"Hand wash, dry and tyre shine. Ready to be seen.",null,null,1],["Interior Refresh","once",95,null,"Vacuum, dash shine and a fresh scent. Feels like a new car inside.",null,null,1],
-  ["Full Washly Weekly","monthly",480,null,"The Full Washly every week, on your day and time. Always clean, never think about it.","Best value",1,null],["Weekly Shine","monthly",300,null,"An Exterior Shine every week, on your day and time.",null,2,null],["Interior Weekly","monthly",300,null,"An Interior Refresh every week, on your day and time.",null,3,null],["Build Your Own","monthly",200,480,"Pick what you want done each week. We'll confirm the price with you (R200 to R480).",null,null,null]]
+  ["Full Washly Weekly","monthly",480,null,"The Full Washly every week, on your day and time. Always clean, never think about it.","Best value",1,null],["Weekly Shine","monthly",300,null,"An Exterior Shine every week, on your day and time.",null,2,null],["Interior Weekly","monthly",300,null,"An Interior Refresh every week, on your day and time.",null,3,null]]
   .map(([name,kind,price,price_max,description,badge,compare_to,upgrade_to],i)=>({id:i+1,name,kind,price,price_max,custom:price_max!=null,description,badge,compare_to,upgrade_to,active:true,sort:i+1}));
 /* ================= start ================= */
 (async function start(){
