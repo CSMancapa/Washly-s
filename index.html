@@ -329,6 +329,9 @@ label{gap:7px}
 .steps3 .si{width:42px;height:42px;border-radius:14px}
 .steps3 b{display:block}
 .steps3 span.small{color:var(--muted)}
+.review{background:linear-gradient(135deg,#fff 0%,#FDF3DC 100%)}
+.review .stars{color:#F2B33D;font-size:22px;letter-spacing:4px;line-height:1}
+.mailkinds{margin:8px 0;padding-left:18px;display:grid;gap:4px}
 .welcome{display:flex;gap:12px;align-items:flex-start;background:#FDF3DC;border-radius:20px;padding:16px 18px}
 .welcome svg{width:24px;height:24px;color:#9A6A00;flex:none}
 /* signed-in home */
@@ -567,6 +570,9 @@ function supaApi(url,key){
     refund(paymentId){return this.fn({action:"refund",payment_id:paymentId})},
     yocoStatus(){return this.fn({action:"status"})},
     yocoSetup(){return this.fn({action:"setup"})},
+    /* Automatic emails run through the "emails" function on Supabase, which talks to Resend. */
+    async emailFn(body){const r=await sb.functions.invoke("emails",{body});if(r.error){let m=r.error.message;try{const j=await r.error.context.json();m=j.error||m}catch(e){}throw new Error(m)}return r.data},
+    async emailStats(){return chk(await sb.rpc("email_stats"))},
     async payLater(ids){return chk(await sb.rpc("pay_later",{p_booking_ids:ids}))},
     async payment(id){return chk(await sb.from("payments").select("*").eq("id",id).single())},
     async payments(){return chk(await sb.from("payments").select("*").order("created_at",{ascending:false}).limit(500))},
@@ -801,6 +807,19 @@ const PHOTOS={
   monthly:{src:U_PH("photo-1665326278095-6526bd0990d8"),tone:"navy",by:"Winston Tjia"}};
 const photoKey=s=>/vac/i.test(s.name)?"vacuum":/inside|interior/i.test(s.name)?"inside":/dry|exterior|shine/i.test(s.name)?"washdry":"full";
 const phImg=(k,w)=>`<img class="ph-i" src="${PHOTOS[k].src(w)}" srcset="${PHOTOS[k].src(w)} 1x, ${PHOTOS[k].src(w*2)} 2x" alt="" loading="lazy" decoding="async" crossorigin="anonymous">`;
+/* After a recent wash, ask for a Google review (once; the customer can say not now). */
+const REVIEW_KEY="washlys-reviewed";
+function reviewCard(){const url=(S.settings||{}).review_url;if(!url||!/^https:\/\//.test(url)||isAdmin())return "";
+  const t=todayISO(),last=myBookings().filter(b=>b.status==="done"&&b.date<=t).map(b=>b.date).sort().pop();
+  if(!last||daysUntil(last)<-14)return "";
+  let seen="";try{seen=localStorage.getItem(REVIEW_KEY)||""}catch(e){}if(seen&&seen>=last)return "";
+  return `<div class="card review" id="reviewCard"><div class="between"><h2>How did we do?</h2><button type="button" class="linkbtn small" data-review="later">Not now</button></div>
+    <p class="small muted">Thanks for your recent wash. A quick Google review helps a small Gqeberha business like ours a lot.</p>
+    <div class="stars" aria-hidden="true">★★★★★</div>
+    <a class="btn" href="${esc(url)}" target="_blank" rel="noopener" data-review="go" style="align-self:flex-start">Leave a Google review</a></div>`}
+function reviewAfter(){const c=$("#reviewCard");if(!c)return;const last=myBookings().filter(b=>b.status==="done").map(b=>b.date).sort().pop()||todayISO();
+  c.querySelectorAll("[data-review]").forEach(b=>b.addEventListener("click",()=>{try{localStorage.setItem(REVIEW_KEY,last)}catch(e){}
+    if(b.dataset.review==="go")setTimeout(()=>{c.remove();toast("Thank you!")},300);else c.remove()}))}
 VIEWS.home=()=>{
   if(!S.me){const once=S.services.filter(s=>s.kind==="once"&&s.active),mon=S.services.filter(s=>s.kind==="monthly"&&s.active);
     const minMon=mon.length?Math.min(...mon.map(s=>+s.price)):null;
@@ -839,6 +858,7 @@ VIEWS.home=()=>{
     <div class="quick"><a class="main" href="#/book"><span class="si">${ico("book")}</span>Book a wash</a><a href="#/washes"><span class="si">${ico("list")}</span>My washes</a><a href="#/fuel"><span class="si">${ico("fuel")}</span>Fuel Friend</a></div>
     <section class="stack" style="gap:10px"><div class="sec-h"><h2>Your next wash</h2>${next?`<a href="#/washes">All washes</a>`:""}</div>
       ${next?bookingCard(next):`<div class="card"><p class="muted">Nothing booked yet. Pick a wash and a time, and we'll come to you.</p><a class="btn" href="#/book" style="align-self:flex-start">Book a wash</a></div>`}</section>
+    ${reviewCard()}
     ${st.every?`<div class="card"><div class="between"><h2>Loyalty card</h2><span class="small muted">Every ${st.every}th once-off wash is free</span></div>
       <div class="stamps">${Array.from({length:st.every},(_,i)=>`<span class="${i<st.inCard?"on":""} ${i===st.every-1?"gift":""}">${i===st.every-1?"Free":i+1}</span>`).join("")}</div>
       <p class="small muted">${st.inCard===st.every-1?"Your next once-off wash is free!":`${st.every-1-st.inCard} more once-off wash${st.every-1-st.inCard===1?"":"es"} until a free one.`}</p></div>`:""}
@@ -846,7 +866,7 @@ VIEWS.home=()=>{
     ${fuelTeaser()}
   </div>`;
 };
-AFTER.home=()=>{S.done=null;fuelTeaserFill();drawRefer($("#referBox"))};
+AFTER.home=()=>{S.done=null;fuelTeaserFill();drawRefer($("#referBox"));reviewAfter()};
 /* Refer a friend: the customer's own code and link. Hidden until the database has the feature. */
 async function drawRefer(box){
   if(!box||!S.me||isAdmin()||!api.friendCode)return;
@@ -1343,11 +1363,12 @@ VIEWS.washes=()=>{
   return `<div class="stack"><div class="between"><h1>My washes</h1><a class="btn sm" href="#/book">Book a wash</a></div>
     ${S.done?`<div class="card" style="border-color:var(--sun)"><b>${esc(S.done)}</b></div>`:""}${creditNote()}
     <p class="small muted">Move or cancel a wash up to the day before. On the day itself, please contact us: a missed wash is forfeited.</p>
+    ${reviewCard()}
     <h2>Coming up</h2><div class="stack" style="gap:10px" id="bkList">${up.map(b=>bookingCard(b)).join("")||`<p class="muted">Nothing booked.</p>`}</div>
     ${past.length?`<h2>Past and cancelled</h2><div class="stack" style="gap:10px">${past.slice(0,30).map(b=>bookingCard(b)).join("")}</div>`:""}
     <div class="card"><h3>Questions about a booking you've made?</h3><p class="small muted">To book, move or cancel a wash, use the app. For anything else about a booking, like a change on the day itself, contact us:</p>${contactRow("booking")}</div></div>`;
 };
-AFTER.washes=()=>{S.done=null};
+AFTER.washes=()=>{S.done=null;reviewAfter()};
 const creditNote=()=>S.me&&+S.me.credit>0?`<div class="free"><b>You have R${(+S.me.credit).toFixed(2)} credit.</b> It's used automatically on your next booking.</div>`:"";
 
 /* ---------- back from Yoco's payment page ---------- */
@@ -1630,6 +1651,28 @@ VIEWS.settings=()=>{const st=setts();return `<div class="stack"><h1>Settings</h1
     <label>How long an unpaid "pay now" booking holds its time (minutes)<input name="pay_hold_minutes" type="number" min="10" max="120" value="${st.pay_hold_minutes||30}"></label>
     <p class="small muted">When a customer cancels, the app first offers to move the wash. If they still cancel, a card payment that covers only that wash is refunded automatically. Otherwise (one wash from a package paid in one go, or a test payment) it shows under <b>Refunds due</b> for you to pay back and tick off.</p>
     <p id="payMsg" role="status"></p><button class="btn" type="submit">Save payment settings</button></form>
+  <form class="card" id="fMail" novalidate><h2>Automatic emails</h2>
+    <div id="mailBox" class="free" style="border-color:var(--line)">Checking the email connection…</div>
+    <label class="check"><input type="checkbox" name="emails_on" ${st.emails_on?"checked":""}><span><b>Send automatic emails</b> (every hour, between 08:00 and 19:00)</span></label>
+    <label>Google review link<input name="review_url" type="url" inputmode="url" placeholder="https://g.page/r/…/review" value="${esc(st.review_url||"")}"></label>
+    <p class="small muted" style="margin-top:-6px">From your Google Business Profile: <b>Ask for reviews</b> → copy the link. It goes in the thank-you email and on customers' home screen after a wash.</p>
+    <div class="grid"><label>Business address for the email footer<input name="biz_address" placeholder="e.g. Walmer, Gqeberha" value="${esc(st.biz_address||"")}"></label>
+    <label>Most emails a day<input name="email_cap" type="number" min="5" max="95" value="${st.email_cap||60}"></label>
+    <label>"Time for another" after (days)<input name="again_days" type="number" min="7" max="60" value="${st.again_days||14}"></label>
+    <label>"We miss your car" after (days)<input name="winback_days" type="number" min="21" max="180" value="${st.winback_days||45}"></label></div>
+    <p class="small muted" style="margin-top:-6px">The "we miss your car" discount is the <b>COMEBACK10</b> code under Promo codes: change its %, or untick Active to send that email without a discount.</p>
+    <details class="small"><summary style="cursor:pointer;font-weight:700">Which emails go out</summary><ul class="mailkinds">
+      <li><b>Welcome</b>: when someone creates an account.</li>
+      <li><b>Your first wash</b>: 3 days after sign-up with no booking (only people who ticked "send me offers").</li>
+      <li><b>Thanks + Google review</b>: the day after a wash.</li>
+      <li><b>Time for another</b>: ${st.again_days||14} days after a once-off wash, with the weekly package saving. No discount.</li>
+      <li><b>Package ending</b>: the week before the last wash of a monthly package.</li>
+      <li><b>We miss your car</b>: ${st.winback_days||45} days after the last wash, with the COMEBACK10 discount if that code is active.</li></ul>
+      <p class="muted">Each person gets at most one email a day and never the same email twice. Every email has an unsubscribe link; people who unsubscribe only get the welcome.</p></details>
+    <div id="mailStats" class="small muted"></div>
+    <div class="row"><select name="kind" aria-label="Email to preview" style="width:auto">${[["welcome","Welcome"],["nudge","Your first wash"],["thanks","Thanks + review"],["again","Time for another"],["renew","Package ending"],["winback","We miss your car"]].map(([k,l])=>`<option value="${k}" ${k==="thanks"?"selected":""}>${l}</option>`).join("")}</select>
+      <button type="button" class="btn ghost sm" id="mailPreview">Preview</button><button type="button" class="btn ghost sm" id="mailTest">Send me a test</button></div>
+    <p id="mailMsg" role="status"></p><button class="btn" type="submit">Save email settings</button></form>
   <div class="card"><h2>Promo and event codes</h2><p class="small muted">A discount code takes a % off. An event code (for activation events) lets customers pay on the day even when card payment is required. A code can do both.</p>
     <div id="promoList" class="stack" style="gap:10px"><p class="muted small">Loading…</p></div></div>
   <div class="card"><h2>Your admin account</h2><p class="small">${esc(S.me.name)} · ${esc(S.me.email)}</p><div class="row"><a class="btn ghost sm" href="#/account">Change my password</a><button class="btn ghost sm" data-act="logout">Log out</button></div></div></div>`};
@@ -1652,7 +1695,28 @@ async function drawYoco(){const box=$("#yocoBox");if(!box)return;let s=null;try{
   box.innerHTML=s.webhook?`<b class="okmsg">Yoco connected (${s.mode==="live"?"live: real payments":"test mode: no real money"}).</b>${s.mode!=="live"?` <span class="small">Switch to your live key when you're ready.</span>`:""} <button type="button" class="linkbtn small" id="yocoSetup">Reconnect</button>`
     :`<b>Yoco key found (${s.mode}).</b> One more step: <button type="button" class="btn sm" id="yocoSetup">Connect Yoco</button> <span class="small muted">so Yoco can tell the app when a payment goes through.</span>`;
   $("#yocoSetup").onclick=async e=>{e.target.disabled=true;try{const r=await api.yocoSetup();toast(`Yoco connected (${r.mode})`);drawYoco()}catch(x){toast(x.message);e.target.disabled=false}}}
-AFTER.settings=()=>{drawYoco();drawPromos();
+async function drawMail(){const box=$("#mailBox");if(!box)return;let s=null;try{s=await api.emailFn({action:"status"})}catch(e){}
+  if(!$("#mailBox"))return;
+  box.innerHTML=!s?`<b>Emails aren't set up yet.</b> <span class="small">Add the emails function and your Resend key in Supabase (see EMAILS-SETUP.md).</span>`
+    :!s.connected?`<b>Add your Resend API key</b> <span class="small">in Supabase → Edge Functions → Secrets (RESEND_API_KEY).</span>`
+    :!s.scheduled?`<b>Resend connected.</b> <span class="small">Add CRON_SECRET and the hourly schedule (EMAILS-SETUP.md step 4) so emails go out on their own.</span>`
+    :`<b class="okmsg">Emails connected.</b> <span class="small muted">Sending from ${esc(s.from)}</span>`;
+  const sx=$("#mailStats");if(!sx)return;try{const t=await api.emailStats();const N={welcome:"welcome",nudge:"first wash",thanks:"thanks",again:"time for another",renew:"package ending",winback:"miss your car"};
+    const k=Object.entries(t.kinds||{}).map(([a,n])=>`${n} ${N[a]||a}`).join(", ");
+    sx.innerHTML=`Sent today: <b>${t.today}</b>${k?` · last 30 days: ${esc(k)}`:""}${t.failed?` · <span class="err">${t.failed} failed this week${t.last_error?`: ${esc(t.last_error)}`:""}</span>`:""}`}catch(e){sx.textContent=""}}
+function mailPreview(subject,html){openSheet(`<div class="stack"><div class="between"><h2 id="sheetT" style="font-size:18px">${esc(subject)}</h2><button type="button" class="linkbtn" data-sheet-close>Close</button></div>
+  <iframe title="Email preview" sandbox="allow-popups" style="width:100%;height:70vh;border:1px solid var(--line);border-radius:12px;background:#F1F6F7"></iframe></div>`);
+  const fr=document.querySelector(".sheet iframe");if(fr)fr.srcdoc=html}
+AFTER.settings=()=>{drawYoco();drawPromos();drawMail();
+  const fm=$("#fMail"),mm=$("#mailMsg");
+  $("#mailPreview").onclick=async e=>{e.target.disabled=true;try{const r=await api.emailFn({action:"preview",kind:fm.kind.value});mailPreview(r.subject,r.html)}catch(x){mm.className="err";mm.textContent=x.message}e.target.disabled=false};
+  $("#mailTest").onclick=async e=>{e.target.disabled=true;try{const r=await api.emailFn({action:"test",kind:fm.kind.value});mm.className="okmsg";mm.textContent=`Test sent to ${r.to}. Check your inbox (and spam).`}catch(x){mm.className="err";mm.textContent=x.message}e.target.disabled=false};
+  fm.onsubmit=async e=>{e.preventDefault();const fd=new FormData(fm),url=String(fd.get("review_url")||"").trim();
+    if(url&&!/^https:\/\/\S+\.\S+/.test(url)){mm.className="err";mm.textContent="The review link should start with https://";return}
+    const ag=Math.max(7,Math.min(60,+fd.get("again_days")||14)),wb=Math.max(21,Math.min(180,+fd.get("winback_days")||45));
+    if(wb<ag+7){mm.className="err";mm.textContent=`"We miss your car" has to come at least a week after "Time for another" (more than ${ag+6} days).`;return}
+    try{S.settings=await api.saveSettings({emails_on:fd.has("emails_on"),again_days:ag,winback_days:wb,review_url:url,biz_address:String(fd.get("biz_address")||"").trim().slice(0,120),email_cap:Math.max(5,Math.min(95,+fd.get("email_cap")||60))});
+      mm.className="okmsg";mm.textContent=fd.has("emails_on")?"Saved. Emails go out on the next hourly run.":"Saved. Automatic emails are off."}catch(x){mm.className="err";mm.textContent=x.message}};
   $("#fPay").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target),m=$("#payMsg");
     try{S.settings=await api.saveSettings({pay_mode:fd.get("pay_mode")==="required"?"required":"optional",pay_hold_minutes:Math.max(10,Math.min(120,+fd.get("pay_hold_minutes")||30))});m.className="okmsg";m.textContent="Saved."}catch(x){m.className="err";m.textContent=x.message}};
   $("#fSet").onsubmit=async e=>{e.preventDefault();const f=e.target,m=$("#setMsg"),fd=new FormData(f);
