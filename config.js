@@ -10,8 +10,6 @@ window.WASHLYS_CONFIG = {
   fuelPage: "https://csmancapa.github.io/Fuel_Friend/",
 
   contact: {
-    phone: "+27 84 056 1932",
-    whatsapp: "27840561932",
     email: "washlyscarwash@gmail.com",
     instagram: "washlyscarwash",
     area: "Gqeberha"
