@@ -670,8 +670,8 @@ async function render(){
 }
 
 /* ================= shared bits ================= */
-const notConnected=()=>`<div class="card"><h2>Bookings are opening soon</h2><p>The booking system isn't connected yet. In the meantime, book on WhatsApp or Instagram.</p>${contactRow()}</div>`;
-function contactRow(kind){const em=kind==="booking"?BOOK_EMAIL:INFO_EMAIL;return `<div class="row">${CT.whatsapp?`<a class="btn sm" href="${waLink(CT.whatsapp,"Hi Washly's, I'd like to book a wash.")}" target="_blank" rel="noopener">WhatsApp ${esc(CT.phone||"")}</a>`:""}<a class="btn sm ghost" href="mailto:${esc(em)}">${esc(em)}</a><a class="btn sm ghost" href="https://www.instagram.com/${esc(IG_HANDLE)}/" target="_blank" rel="noopener">${SOCIAL_ICON.ig}Instagram</a><a class="btn sm ghost" href="https://www.facebook.com/${esc(FB_PAGE)}" target="_blank" rel="noopener">${SOCIAL_ICON.fb}Facebook</a></div>`}
+const notConnected=()=>`<div class="card"><h2>Bookings are opening soon</h2><p>The booking system isn't connected yet. In the meantime, book on Instagram or by email.</p>${contactRow()}</div>`;
+function contactRow(kind){const em=kind==="booking"?BOOK_EMAIL:INFO_EMAIL;return `<div class="row"><a class="btn sm ghost" href="mailto:${esc(em)}">${esc(em)}</a><a class="btn sm ghost" href="https://www.instagram.com/${esc(IG_HANDLE)}/" target="_blank" rel="noopener">${SOCIAL_ICON.ig}Instagram</a><a class="btn sm ghost" href="https://www.facebook.com/${esc(FB_PAGE)}" target="_blank" rel="noopener">${SOCIAL_ICON.fb}Facebook</a></div>`}
 const freeNote=()=>`<div class="free"><b>Your account is free and it isn't a subscription.</b> There's no monthly fee and nothing is charged when you sign up. You only pay for the washes you book.</div>`;
 function priceLabel(svc,size){
   const ex=extraFor(size||"sedan");
